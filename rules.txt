@@ -1,0 +1,71 @@
+🎯 Game Title: Expresión Exprés
+🧠 Game Objective
+Two teams compete to guess words or expressions. A team wins by moving its token along a board and reaching the finish line first.
+
+🎲 Components
+A word selector (a device or virtual tool that shows a new word/expression each time it's activated).
+
+A timer that increases in speed and ends with a buzzer sound.
+
+A circular board with spaces from START to FINISH.
+
+16 double-sided word disks (each with one expression/word).
+
+2 team tokens (one per team).
+
+A set of game rules.
+
+🔧 Setup
+Players form two teams.
+
+Each team selects a token and places it on the START space of the board.
+
+Insert the word disks into the selector in the predefined order.
+
+Turn on the timer. It starts counting with a progressively faster beeping sound.
+
+One player from the starting team holds the selector and prepares to describe the word shown.
+
+🎮 Game Flow
+On Each Turn:
+The active team sees a word on the selector.
+
+One team member (the clue-giver) must describe the word to their teammate (the guesser).
+
+The guesser must identify the word before the timer runs out.
+
+Rules for Clue-Giving:
+Do NOT use rhymes or sound-alikes (e.g., saying “singer” if the word is “sing” is not allowed).
+
+Do NOT use word roots or part of the word (e.g., saying “dish” for “dishwasher” is not allowed).
+
+Success:
+If the team guesses the word correctly before the timer buzzes:
+
+The team advances their token by 1 space.
+
+The selector and turn pass to the opposing team.
+
+Failure:
+If the timer buzzes while the team is still trying to guess:
+
+The opposing team earns 1 point (moves their token 1 space forward).
+
+The Timer:
+The beeping accelerates over time, creating pressure.
+
+When the buzzer sounds (e.g., a long “beeeep”), the turn ends immediately.
+
+🏁 Winning the Game
+The first team to move their token all the way to the FINISH space wins.
+
+💡 Implementation Tips (for a web version)
+Word Pool: Use a JSON or database list of expressions.
+
+Timer: Use increasing intervals with sound cues.
+
+Game State: Store team turns, guessed words, and token positions.
+
+Frontend: Use simple UI with a timer, word display, and board.
+
+Rules Enforcement: Optional manual or AI-assisted flagging of invalid clues.
