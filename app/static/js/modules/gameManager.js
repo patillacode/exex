@@ -104,7 +104,14 @@ export default class GameManager {
      */
     init() {
         this.setupEventListeners();
-        this.fetchGameState();
+        this.fetchGameState()
+            .then(() => {
+                // After fetching game state, ensure the correct team is highlighted
+                this.highlightCurrentTeam();
+            })
+            .catch(error => {
+                console.error("Error initializing game:", error);
+            });
     }
     
     /**
@@ -157,10 +164,16 @@ export default class GameManager {
     
     /**
      * Fetch the current game state from the server
+     * @returns {Promise} A promise that resolves when the state is fetched
      */
     fetchGameState() {
-        fetch(this.config.apiUrls.gameState)
-            .then(response => response.json())
+        return fetch(this.config.apiUrls.gameState)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.json();
+            })
             .then(data => {
                 if (data.success) {
                     // Update local game state
@@ -173,11 +186,16 @@ export default class GameManager {
                     if (!this.gameState.isTimerActive) {
                         this.showTurnOverlay();
                     }
+                    
+                    return data.game_state;
+                } else {
+                    throw new Error(data.error || 'Unknown error');
                 }
             })
             .catch(error => {
                 console.error('Error fetching game state:', error);
                 this.showError('Error al cargar el estado del juego');
+                throw error;
             });
     }
     
@@ -201,6 +219,26 @@ export default class GameManager {
         if (this.gameState.currentWord) {
             this.wordDisplay.setWord(this.gameState.currentWord);
         }
+        
+        // Highlight the current team
+        this.highlightCurrentTeam();
+        
+        // Update the "Jugando" indicator
+        const teamChangeEvent = new CustomEvent('team:changed', {
+            detail: {
+                teamIndex: this.gameState.currentTeam,
+                teamName: this.teamManager.getCurrentTeamName()
+            }
+        });
+        window.dispatchEvent(teamChangeEvent);
+        
+        // Notify that game state has been updated
+        const stateEvent = new CustomEvent('game:stateUpdated', {
+            detail: { 
+                state: this.gameState
+            }
+        });
+        window.dispatchEvent(stateEvent);
     }
     
     /**
@@ -209,16 +247,25 @@ export default class GameManager {
     updateRoundStatus() {
         if (!this.elements.roundStatus) return;
         
+        const currentTeam = this.teamManager.getCurrentTeamName();
+        
         if (!this.gameState.isRoundActive) {
             this.elements.roundStatus.textContent = 'Ronda no iniciada';
+            this.elements.roundStatus.style.fontWeight = 'normal';
+        } else if (this.gameState.isTimerActive) {
+            // If timer is active, it's this team's turn to guess
+            this.elements.roundStatus.textContent = `Turno de ${currentTeam} para adivinar`;
+            this.elements.roundStatus.style.fontWeight = 'bold';
+            this.elements.roundStatus.style.color = '#2E3A59';
+        } else if (this.gameState.isConfirmationNeeded) {
+            // If confirmation is needed, show which team needs to confirm
+            this.elements.roundStatus.textContent = `${currentTeam} - Confirmar palabra adivinada`;
+            this.elements.roundStatus.style.fontWeight = 'bold';
+            this.elements.roundStatus.style.color = '#5B8AF5';
         } else {
-            const currentTeam = this.teamManager.getCurrentTeamName();
-            
-            if (this.gameState.isConfirmationNeeded) {
-                this.elements.roundStatus.textContent = `${currentTeam} - Confirmar palabra adivinada`;
-            } else {
-                this.elements.roundStatus.textContent = `Turno de ${currentTeam}`;
-            }
+            // Default status
+            this.elements.roundStatus.textContent = `Turno de ${currentTeam}`;
+            this.elements.roundStatus.style.fontWeight = 'normal';
         }
     }
     
@@ -250,6 +297,19 @@ export default class GameManager {
         if (currentTeam && this.elements.currentTeamName) {
             this.elements.currentTeamName.textContent = currentTeam.name;
         }
+        
+        // Show or hide confirmation instructions based on state
+        const confirmationInstructions = document.getElementById('confirmation-instruction');
+        if (confirmationInstructions) {
+            if (this.gameState.isConfirmationNeeded) {
+                confirmationInstructions.style.display = 'inline';
+            } else {
+                confirmationInstructions.style.display = 'none';
+            }
+        }
+        
+        // Make sure to highlight the correct team before showing overlay
+        this.highlightCurrentTeam();
         
         // Show the overlay
         this.elements.turnOverlay.classList.add('active');
@@ -290,6 +350,15 @@ export default class GameManager {
             this.elements.startRoundBtn.disabled = true;
             this.elements.startRoundBtn.textContent = "Cargando...";
         }
+        
+        // Make sure the confirm button is visible
+        if (this.elements.confirmWordBtn) {
+            this.elements.confirmWordBtn.style.display = 'block';
+            this.elements.confirmWordBtn.classList.remove('pulse');
+        }
+        
+        // Stop any sounds that might be playing from previous rounds
+        this.stopAllSounds();
 
         // Get a word and timer duration
         Promise.all([
@@ -305,21 +374,44 @@ export default class GameManager {
                 // Display the word
                 this.wordDisplay.setWord(wordData.word);
                 
-                // Set up timer
+                // Set up and start timer
                 this.timer.setDuration(timerData.duration);
-                
-                // Start the timer
                 this.timer.start();
-                
+        
                 // Update game state
                 this.gameState.isRoundActive = true;
                 this.gameState.isTimerActive = true;
                 this.gameState.isConfirmationNeeded = false;
                 
+                // Make sure we're displaying the right team
+                this.highlightCurrentTeam();
+        
+                // Show message with current team's name
+                const currentTeam = this.teamManager.getCurrentTeamName();
+                this.showMessage(`¡${currentTeam} está jugando!`);
+                
+                // Update round status
+                if (this.elements.roundStatus) {
+                    this.elements.roundStatus.textContent = `Turno de ${currentTeam} para adivinar`;
+                    this.elements.roundStatus.style.fontWeight = 'bold';
+                }
+        
                 // Update UI
                 this.updateAllComponents();
-
-                // No messages needed
+                
+                // Update the "Jugando" indicator to highlight current team
+                const teamChangeEvent = new CustomEvent('team:changed', {
+                    detail: {
+                        teamIndex: this.gameState.currentTeam,
+                        teamName: this.teamManager.getCurrentTeamName()
+                    }
+                });
+                window.dispatchEvent(teamChangeEvent);
+        
+                // Ensure the confirm button is visible during the round
+                if (this.elements.confirmWordBtn) {
+                    this.elements.confirmWordBtn.style.display = 'block';
+                }
             }
         })
         .catch(error => {
@@ -344,25 +436,57 @@ export default class GameManager {
         }
         
         if (this.gameState.isConfirmationNeeded) {
-            // Don't get a new word yet, just update the UI to show confirmation is needed
+            // This is the receiving team confirming they've seen the word
+            const currentTeam = this.teamManager.getCurrentTeamName();
+            this.showMessage(`${currentTeam}, ahora debes confirmar si la palabra fue adivinada correctamente`);
+            
+            // Update round status text
+            if (this.elements.roundStatus) {
+                this.elements.roundStatus.textContent = `${currentTeam} - Confirmar la palabra adivinada`;
+                this.elements.roundStatus.style.fontWeight = 'bold';
+                this.elements.roundStatus.style.color = '#5B8AF5';
+            }
+            
+            // Update UI
             this.updateAllComponents();
-
-            // No messages needed
+            
+            // Explicitly update team indicators
+            const teamChangeEvent = new CustomEvent('team:changed', {
+                detail: {
+                    teamIndex: this.gameState.currentTeam,
+                    teamName: this.teamManager.getCurrentTeamName()
+                }
+            });
+            window.dispatchEvent(teamChangeEvent);
+            
+            // Make sure confirm button is prominently displayed
+            if (this.elements.confirmWordBtn) {
+                this.elements.confirmWordBtn.classList.add('pulse');
+                this.elements.confirmWordBtn.style.display = 'block';
+            }
         } else {
-            // When a team has guessed a word and is passing the device:
-            // 1. Store the current word as the previous word before getting a new one
+            // When a team has guessed a word and is passing the device
             this.gameState.previousWord = this.gameState.currentWord;
-            
-            // 2. Set confirmation flag so next team will see confirmation button
             this.gameState.isConfirmationNeeded = true;
-            
-            // 3. Switch to the other team
             this.gameState.currentTeam = 1 - this.gameState.currentTeam;
             
-            // 4. Update UI with the current team and word (confirmation button should appear)
+            const nextTeam = this.teamManager.getCurrentTeamName();
+            this.showMessage(`Pasa el dispositivo a ${nextTeam} para confirmar`);
+            
+            // Highlight the new current team
+            this.highlightCurrentTeam();
+            
+            // Explicitly update team indicators
+            const teamChangeEvent = new CustomEvent('team:changed', {
+                detail: {
+                    teamIndex: this.gameState.currentTeam,
+                    teamName: this.teamManager.getCurrentTeamName()
+                }
+            });
+            window.dispatchEvent(teamChangeEvent);
+            
+            // Update components including team highlighting
             this.updateAllComponents();
-
-            // No messages needed
         }
     }
     
@@ -372,6 +496,18 @@ export default class GameManager {
     handleWordConfirmed() {
         // Update game state - confirmation is no longer needed
         this.gameState.isConfirmationNeeded = false;
+        
+        // Disable confirmation button temporarily to prevent double clicks
+        if (this.elements.confirmWordBtn) {
+            this.elements.confirmWordBtn.disabled = true;
+            this.elements.confirmWordBtn.textContent = "Cargando...";
+        }
+        
+        // Play a success sound to acknowledge confirmation
+        if (this.sounds.beep) {
+            this.sounds.beep.currentTime = 0;
+            this.sounds.beep.play().catch(e => console.warn('Could not play beep:', e));
+        }
         
         // Get a new word for this team
         fetch(this.config.apiUrls.nextWord)
@@ -385,10 +521,48 @@ export default class GameManager {
                     this.gameState.currentWord = data.word;
                     this.wordDisplay.setWord(data.word);
                     
-                    // Update UI to show the new word and hide confirmation button
-                    this.updateAllComponents();
+                    // Update UI to show the new word and reset confirmation button
+                    if (this.elements.confirmWordBtn) {
+                        this.elements.confirmWordBtn.disabled = false;
+                        this.elements.confirmWordBtn.textContent = "¡Confirmar Palabra Adivinada!";
+                        this.elements.confirmWordBtn.style.display = 'block'; // Always visible during rounds
+                        this.elements.confirmWordBtn.classList.remove('pulse'); // Remove pulsing effect
+                    }
                     
-                    // No messages needed
+                    // Update the round status to show it's this team's turn to guess
+                    if (this.elements.roundStatus) {
+                        const currentTeam = this.teamManager.getCurrentTeamName();
+                        this.elements.roundStatus.textContent = `Turno de ${currentTeam} para adivinar`;
+                        this.elements.roundStatus.style.fontWeight = 'bold';
+                        this.elements.roundStatus.style.color = '#2E3A59';
+                    }
+                    
+                    // Force an immediate update of team indicators
+                    const team0Indicator = document.querySelector('#team-status-0 .current-team-indicator');
+                    const team1Indicator = document.querySelector('#team-status-1 .current-team-indicator');
+                    
+                    if (team0Indicator && team1Indicator) {
+                        team0Indicator.style.display = this.gameState.currentTeam === 0 ? 'block' : 'none';
+                        team1Indicator.style.display = this.gameState.currentTeam === 1 ? 'block' : 'none';
+                    }
+                    
+                    // Make sure we update team status highlighting
+                    this.highlightCurrentTeam();
+                    
+                    // Dispatch team change event to update "Jugando" indicator
+                    const teamChangeEvent = new CustomEvent('team:changed', {
+                        detail: {
+                            teamIndex: this.gameState.currentTeam,
+                            teamName: this.teamManager.getCurrentTeamName()
+                        }
+                    });
+                    window.dispatchEvent(teamChangeEvent);
+                    
+                    // Show a message confirming whose turn it is now
+                    this.showMessage(`¡Es turno de ${this.teamManager.getCurrentTeamName()} para adivinar!`);
+                    
+                    // Update all components after team change
+                    this.updateAllComponents();
                     
                     // Don't show the passing overlay - the team that confirmed now plays
                     // The passing happens after they guess their word
@@ -397,6 +571,12 @@ export default class GameManager {
             .catch(error => {
                 console.error('Error getting next word:', error);
                 this.showError('Error al obtener la siguiente palabra');
+                
+                // Re-enable button in case of error
+                if (this.elements.confirmWordBtn) {
+                    this.elements.confirmWordBtn.disabled = false;
+                    this.elements.confirmWordBtn.textContent = "¡Confirmar Palabra Adivinada!";
+                }
             });
     }
     
@@ -406,6 +586,11 @@ export default class GameManager {
      */
     updateTimerUI(timerState) {
         // Don't update any visual UI for the timer - it's meant to be hidden
+        // If the timer has been stopped (isStopped flag), stop any sounds
+        if (timerState && timerState.isStopped) {
+            this.stopAllSounds();
+        }
+        
         // Beeps are handled by the timer module
     }
     
@@ -413,6 +598,9 @@ export default class GameManager {
      * Handle timer end
      */
     handleTimerEnd() {
+        // Stop all sounds first
+        this.stopAllSounds();
+        
         // Play buzzer sound
         this.playBuzzer();
         
@@ -420,24 +608,51 @@ export default class GameManager {
         this.gameState.isTimerActive = false;
         this.gameState.isRoundActive = false;
         
-        // Other team gets a point
+        // Other team gets a point (but don't update UI yet - it will be updated when backend responds)
         const otherTeamIndex = 1 - this.gameState.currentTeam;
-        this.gameState.teams[otherTeamIndex].position += 1;
         
-        // Show animation for the team getting a point
-        this.gameBoard.celebrateToken(otherTeamIndex);
-        
-        // Update the board
-        this.gameBoard.update(this.gameState);
-        
-        // Check for win condition
-        if (this.gameState.teams[otherTeamIndex].position >= this.gameState.boardLength) {
-            this.showWinOverlay(this.gameState.teams[otherTeamIndex].name);
-            return;
-        }
-        
-        // Show the timer end overlay
-        this.showTimerEndOverlay();
+        // Tell the server that the timer ended (will award point to other team)
+        fetch(this.config.apiUrls.nextTurn, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                timer_ended: true
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update game state from server
+                Object.assign(this.gameState, data.game_state);
+                
+                // Update the scoreboard first
+                this.gameBoard.update(this.gameState);
+                
+                // Now animate and celebrate the score change
+                this.gameBoard.animateScoreChange(otherTeamIndex, true);
+                
+                // Check for win condition
+                if (data.winner) {
+                    this.showWinOverlay(data.winner);
+                    return;
+                }
+                
+                // For timer end, we DON'T switch teams - the opposing team gets both the point 
+                // and the chance for an extra point, so we need to make sure currentTeam 
+                // reflects the team that failed to guess in time
+                this.gameState.currentTeam = 1 - otherTeamIndex;
+                
+                // Show the timer end overlay
+                this.showTimerEndOverlay();
+            }
+        })
+        .catch(error => {
+            console.error('Error updating game state after timer end:', error);
+            // Still show the overlay even if there's an error
+            this.showTimerEndOverlay();
+        });
     }
     
     /**
@@ -446,10 +661,16 @@ export default class GameManager {
     showTimerEndOverlay() {
         if (!this.elements.timerEndOverlay || !this.gameState.teams) return;
         
-        // Set other team name (the one that gets a point)
+        // Set other team name (the one that gets a point and can get an extra point)
         const otherTeamIndex = 1 - this.gameState.currentTeam;
         if (this.gameState.teams[otherTeamIndex] && this.elements.otherTeamName) {
             this.elements.otherTeamName.textContent = this.gameState.teams[otherTeamIndex].name;
+        }
+        
+        // Set other team name (the one that can get extra point)
+        const currentTeamDisplay = document.getElementById('current-team-display');
+        if (currentTeamDisplay && this.gameState.teams[otherTeamIndex]) {
+            currentTeamDisplay.textContent = this.gameState.teams[otherTeamIndex].name;
         }
         
         // Show the overlay
@@ -468,6 +689,14 @@ export default class GameManager {
         // Set the revealed word
         if (this.elements.revealedWord && this.gameState.currentWord) {
             this.elements.revealedWord.textContent = this.gameState.currentWord;
+        }
+        
+        // When timer ends, the opposing team (who already got a point)
+        // gets the chance for an extra point
+        const otherTeamIndex = 1 - this.gameState.currentTeam;
+        const currentTeamExtra = document.getElementById('current-team-extra');
+        if (currentTeamExtra && this.gameState.teams[otherTeamIndex]) {
+            currentTeamExtra.textContent = this.gameState.teams[otherTeamIndex].name;
         }
         
         // Show the extra point overlay
@@ -535,29 +764,65 @@ export default class GameManager {
             this.elements.extraPointOverlay.classList.remove('active');
         }
         
-        if (correct) {
-            // Award the extra point
-            const otherTeamIndex = 1 - this.gameState.currentTeam;
-            this.gameState.teams[otherTeamIndex].position += 1;
-            
-            // Update the board
-            this.gameBoard.update(this.gameState);
-            
-            // Check for win condition
-            if (this.gameState.teams[otherTeamIndex].position >= this.gameState.boardLength) {
-                this.showWinOverlay(this.gameState.teams[otherTeamIndex].name);
-                return;
-            }
-        }
+        // The other team is the one getting the extra point
+        const otherTeamIndex = 1 - this.gameState.currentTeam;
         
-        // Start a new round
-        this.startNewRound();
+        if (correct) {
+            // Award the extra point via API
+            fetch(this.config.apiUrls.submitResult, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    extra_point: true,
+                    word: this.gameState.currentWord
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update game state
+                    Object.assign(this.gameState, data.game_state);
+                    
+                    // Update the scoreboard first
+                    this.gameBoard.update(this.gameState);
+                    
+                    // Now animate and celebrate the score change
+                    this.gameBoard.animateScoreChange(otherTeamIndex, true);
+                    
+                    // Check for winner
+                    if (data.winner) {
+                        this.showWinOverlay(data.winner);
+                        return;
+                    }
+                    
+                    // Show confirmation message
+                    this.showMessage(`¡${this.gameState.teams[otherTeamIndex].name} ha obtenido un punto extra!`);
+                    
+                    // Start a new round if no winner
+                    this.startNewRound();
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting extra point result:', error);
+                // Still start a new round even if there's an error
+                this.startNewRound();
+            });
+        } else {
+            // Start a new round without awarding a point
+            this.showMessage(`${this.gameState.teams[otherTeamIndex].name} no obtuvo el punto adicional`);
+            this.startNewRound();
+        }
     }
     
     /**
      * Start a new round after timer end and extra point phase
      */
     startNewRound() {
+        // Stop any sounds that might be playing
+        this.stopAllSounds();
+        
         // Hide any open overlays
         if (this.elements.timerEndOverlay) {
             this.elements.timerEndOverlay.classList.remove('active');
@@ -570,13 +835,49 @@ export default class GameManager {
         // Reset timer
         this.timer.reset();
         
-        // Reset UI components
-        this.updateAllComponents();
+        // After timer end + extra point attempt, we need to switch to the other team for the next round
+        // This is because when timer ended, we didn't switch teams (to allow the opposing team to try for extra point)
+        const otherTeamIndex = 1 - this.gameState.currentTeam;
+        this.gameState.currentTeam = otherTeamIndex;
         
-        // Reset the round state
-        this.gameState.isRoundActive = false;
-        this.gameState.isTimerActive = false;
-        this.gameState.isConfirmationNeeded = false;
+        // Fetch the latest game state to ensure we're in sync with the server
+        fetch(this.config.apiUrls.gameState)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update local game state
+                    Object.assign(this.gameState, data.game_state);
+                    
+                    // Ensure we have switched to the other team
+                    this.gameState.currentTeam = otherTeamIndex;
+                    
+                    // Reset UI components
+                    this.updateAllComponents();
+                    
+                    // Reset the round state
+                    this.gameState.isRoundActive = false;
+                    this.gameState.isTimerActive = false;
+                    this.gameState.isConfirmationNeeded = false;
+                    
+                    // Reset the word display
+                    this.wordDisplay.reset();
+                    
+                    // Show message about team change
+                    this.showMessage(`Turno de ${this.teamManager.getCurrentTeamName()} para iniciar ronda`);
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching game state:', error);
+                // If fetch fails, still try to reset UI
+                this.updateAllComponents();
+                this.gameState.isRoundActive = false;
+                this.gameState.isTimerActive = false;
+                this.gameState.isConfirmationNeeded = false;
+                this.wordDisplay.reset();
+                
+                // Show message about team change even on error
+                this.showMessage(`Turno de ${this.teamManager.getCurrentTeamName()} para iniciar ronda`);
+            });
     }
     
     /**
@@ -584,6 +885,9 @@ export default class GameManager {
      * @param {string} winner - Name of the winning team
      */
     showWinOverlay(winner) {
+        // Make sure all sounds stop before showing win overlay
+        this.stopAllSounds();
+        
         if (this.elements.winOverlay && this.elements.winnerName) {
             this.elements.winnerName.textContent = winner;
             this.elements.winOverlay.classList.add('active');
@@ -594,6 +898,9 @@ export default class GameManager {
      * Reset the game
      */
     resetGame() {
+        // First stop any sounds that might be playing
+        this.stopAllSounds();
+        
         fetch(this.config.apiUrls.reset, {
             method: 'POST',
             headers: {
@@ -619,16 +926,124 @@ export default class GameManager {
     updateButtonVisibility() {
         // Start round button
         if (this.elements.startRoundBtn) {
-            this.elements.startRoundBtn.style.display = 
-                this.gameState.isRoundActive ? 'none' : 'block';
+            const shouldDisplayStartBtn = !this.gameState.isRoundActive;
+            this.elements.startRoundBtn.style.display = shouldDisplayStartBtn ? 'block' : 'none';
+            
+            // Ensure it's enabled
+            this.elements.startRoundBtn.disabled = false;
+            this.elements.startRoundBtn.textContent = "¡Iniciar Ronda!";
         }
         
-        // Confirm word button - ALWAYS visible during active rounds
+        // Confirm word button - Always visible during active rounds
         if (this.elements.confirmWordBtn) {
-            // Always show the button during active rounds
-            this.elements.confirmWordBtn.style.display = 
-                this.gameState.isRoundActive ? 'block' : 'none';
+            const shouldDisplayConfirmBtn = this.gameState.isRoundActive;
+            this.elements.confirmWordBtn.style.display = shouldDisplayConfirmBtn ? 'block' : 'none';
+            
+            // Ensure it's enabled
+            this.elements.confirmWordBtn.disabled = false;
+            this.elements.confirmWordBtn.textContent = "¡Confirmar Palabra Adivinada!";
+            
+            // Add a pulse animation if confirmation is needed
+            if (this.gameState.isConfirmationNeeded) {
+                this.elements.confirmWordBtn.classList.add('pulse');
+            } else {
+                this.elements.confirmWordBtn.classList.remove('pulse');
+            }
         }
+        
+        // Update team indicators first
+        const team0Indicator = document.querySelector('#team-status-0 .current-team-indicator');
+        const team1Indicator = document.querySelector('#team-status-1 .current-team-indicator');
+        
+        if (team0Indicator && team1Indicator) {
+            team0Indicator.style.display = this.gameState.currentTeam === 0 ? 'block' : 'none';
+            team1Indicator.style.display = this.gameState.currentTeam === 1 ? 'block' : 'none';
+        }
+        
+        // Highlight the current team
+        this.highlightCurrentTeam();
+    }
+    
+    /**
+     * Highlight the currently active team status box
+     */
+    highlightCurrentTeam() {
+        // Get both team status elements
+        const team0Status = document.getElementById('team-status-0');
+        const team1Status = document.getElementById('team-status-1');
+        
+        if (!team0Status || !team1Status) return;
+        
+        // Reset styles first
+        team0Status.style.border = "1px solid #E4E8F0";
+        team1Status.style.border = "1px solid #E4E8F0";
+        team0Status.style.backgroundColor = "#FFF";
+        team1Status.style.backgroundColor = "#FFF";
+        team0Status.style.boxShadow = "none";
+        team1Status.style.boxShadow = "none";
+        team0Status.style.fontWeight = "normal";
+        team1Status.style.fontWeight = "normal";
+        
+        // Add transition for smoother style changes
+        team0Status.style.transition = "all 0.3s ease";
+        team1Status.style.transition = "all 0.3s ease";
+        
+        // Ensure we have both team names displayed correctly
+        const team0Name = team0Status.querySelector('.team-name');
+        const team1Name = team1Status.querySelector('.team-name');
+        if (team0Name && this.gameState.teams && this.gameState.teams[0]) {
+            team0Name.textContent = this.gameState.teams[0].name;
+        }
+        if (team1Name && this.gameState.teams && this.gameState.teams[1]) {
+            team1Name.textContent = this.gameState.teams[1].name;
+        }
+        
+        // Update the Jugando indicators
+        const team0Indicator = document.querySelector('#team-status-0 .current-team-indicator');
+        const team1Indicator = document.querySelector('#team-status-1 .current-team-indicator');
+        if (team0Indicator && team1Indicator) {
+            team0Indicator.style.display = this.gameState.currentTeam === 0 ? 'block' : 'none';
+            team1Indicator.style.display = this.gameState.currentTeam === 1 ? 'block' : 'none';
+        }
+        
+        // Apply highlight to current team
+        if (this.gameState.currentTeam === 0) {
+            team0Status.style.border = "2px solid #5B8AF5";
+            team0Status.style.backgroundColor = "rgba(91, 138, 245, 0.1)";
+            team0Status.style.boxShadow = "0 0 10px rgba(91, 138, 245, 0.3)";
+            team0Status.style.fontWeight = "bold";
+            
+            // Additional CSS class for consistency
+            team0Status.classList.add('current');
+            team1Status.classList.remove('current');
+        } else {
+            team1Status.style.border = "2px solid #5B8AF5";
+            team1Status.style.backgroundColor = "rgba(91, 138, 245, 0.1)";
+            team1Status.style.boxShadow = "0 0 10px rgba(91, 138, 245, 0.3)";
+            team1Status.style.fontWeight = "bold";
+            
+            // Additional CSS class for consistency
+            team1Status.classList.add('current');
+            team0Status.classList.remove('current');
+        }
+        
+        // Dispatch team change event for other components to react
+        const teamChangeEvent = new CustomEvent('team:changed', {
+            detail: {
+                teamIndex: this.gameState.currentTeam,
+                teamName: this.teamManager.getCurrentTeamName()
+            }
+        });
+        window.dispatchEvent(teamChangeEvent);
+        
+        // Update team name elements with correct team names
+        const currentTeamStatus = this.gameState.currentTeam === 0 ? team0Status : team1Status;
+        if (currentTeamStatus) {
+            currentTeamStatus.setAttribute('aria-label', 'Current team');
+        }
+        
+        // Log current team for debugging
+        console.log("Current team updated:", this.gameState.currentTeam, this.teamManager.getCurrentTeamName());
     }
     
     /**
@@ -648,6 +1063,21 @@ export default class GameManager {
         if (this.sounds.buzzer) {
             this.sounds.buzzer.currentTime = 0;
             this.sounds.buzzer.play().catch(e => console.warn('Could not play buzzer:', e));
+        }
+    }
+    
+    /**
+     * Stop all sounds currently playing
+     */
+    stopAllSounds() {
+        if (this.sounds.beep) {
+            this.sounds.beep.pause();
+            this.sounds.beep.currentTime = 0;
+        }
+        
+        if (this.sounds.buzzer) {
+            this.sounds.buzzer.pause();
+            this.sounds.buzzer.currentTime = 0;
         }
     }
     
@@ -680,19 +1110,54 @@ export default class GameManager {
     
     /**
      * Show a general message to the user (for guidance)
-     * Function kept for API compatibility but doesn't display messages
+     * @param {string} message - Message to display
+     * @param {number} duration - Time to display the message in ms
      */
     showMessage(message, duration = 3000) {
-        // No messages displayed
-        return;
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message-notification fade-in';
+        messageDiv.innerHTML = `<p>${message}</p>`;
+    
+        // Remove any existing message
+        const existingMessage = document.querySelector('.message-notification');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+    
+        // Add the message to the game container
+        const container = document.querySelector('.game-container');
+        if (container) {
+            container.insertBefore(messageDiv, container.firstChild);
+            
+            // Log for debugging
+            console.log("Game message:", message);
+            
+            // Also update the round status to be consistent with messages
+            const roundStatus = document.getElementById('round-status');
+            if (roundStatus) {
+                // Only update if the message contains team information
+                if (message.includes('Turno de') || message.includes('está jugando')) {
+                    roundStatus.textContent = message;
+                    roundStatus.style.fontWeight = 'bold';
+                    roundStatus.style.color = '#2E3A59';
+                }
+            }
+        }
+    
+        // Auto-remove after duration
+        setTimeout(() => {
+            if (messageDiv && messageDiv.parentNode) {
+                messageDiv.classList.remove('fade-in');
+                messageDiv.classList.add('fade-out');
+                setTimeout(() => {
+                    if (messageDiv && messageDiv.parentNode) {
+                        messageDiv.remove();
+                    }
+                }, 300);
+            }
+        }, duration);
     }
 }
 
-// Initialize when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
-    // Only initialize on game page
-    if (document.querySelector('.game-container')) {
-        const gameManager = new GameManager();
-        gameManager.init();
-    }
-});
+// Note: Initialization is handled by the main game.js file
+// No need to initialize here again

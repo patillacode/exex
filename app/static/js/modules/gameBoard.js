@@ -1,152 +1,149 @@
 /**
- * Game Board Module for Expresión Exprés
+ * Score Display Module for Expresión Exprés
  * 
- * Handles the game board visualization, token movement,
- * and board-related UI updates.
+ * Handles the team score display, animations, and updates.
+ * Simplified from previous game board implementation to focus on scores.
  */
 
 export default class GameBoard {
     /**
-     * Initialize the game board
+     * Initialize the score display
      * @param {Object} config - Configuration options
      */
     constructor(config = {}) {
         this.config = {
-            boardPathSelector: '#board-path',
-            token0Selector: '#team-token-0',
-            token1Selector: '#team-token-1',
+            team0ScoreSelector: '#team0-score',
+            team1ScoreSelector: '#team1-score',
+            team0StatusSelector: '#team-status-0',
+            team1StatusSelector: '#team-status-1',
             ...config
         };
         
-        this.boardPath = document.querySelector(this.config.boardPathSelector);
-        this.token0 = document.querySelector(this.config.token0Selector);
-        this.token1 = document.querySelector(this.config.token1Selector);
+        // Find score elements
+        this.team0ScoreEl = document.querySelector(this.config.team0ScoreSelector);
+        this.team1ScoreEl = document.querySelector(this.config.team1ScoreSelector);
         
-        this.boardLength = 10; // Default board length
+        // Find team status containers
+        this.team0StatusEl = document.querySelector(this.config.team0StatusSelector);
+        this.team1StatusEl = document.querySelector(this.config.team1StatusSelector);
+        
+        this.boardLength = 10; // Default win threshold
     }
     
     /**
-     * Update the game board based on game state
+     * Update the score display based on game state
      * @param {Object} gameState - Current game state
      */
     update(gameState) {
-        if (!gameState || !this.boardPath) return;
+        if (!gameState) return;
         
         this.boardLength = gameState.board_length || this.boardLength;
         
-        // Generate board spaces
-        this.generateBoardSpaces();
+        // Update score displays
+        this.updateScores(gameState.teams);
         
-        // Update token positions
-        this.updateTokenPositions(gameState.teams);
+        // Update progress indicators
+        this.updateProgressBars(gameState.teams);
     }
     
     /**
-     * Generate board spaces
-     */
-    generateBoardSpaces() {
-        // Clear existing spaces
-        this.boardPath.innerHTML = '';
-        
-        // Generate board spaces
-        for (let i = 0; i <= this.boardLength; i++) {
-            const space = document.createElement('div');
-            space.className = 'board-space';
-            
-            if (i === 0) {
-                space.classList.add('start');
-            } else if (i === this.boardLength) {
-                space.classList.add('finish');
-            }
-            
-            this.boardPath.appendChild(space);
-        }
-    }
-    
-    /**
-     * Update token positions on the board
+     * Update the score displays
      * @param {Array} teams - Array of team objects with positions
      */
-    updateTokenPositions(teams) {
+    updateScores(teams) {
         if (!teams || !teams.length) return;
         
-        // Calculate position percentage
-        const spaceWidth = 100 / this.boardLength;
-        
-        // Update each token position
-        if (this.token0 && teams[0]) {
-            const position = teams[0].position * spaceWidth;
-            this.token0.style.left = `${position}%`;
+        // Update team 0 score
+        if (this.team0ScoreEl && teams[0]) {
+            this.team0ScoreEl.textContent = teams[0].position;
         }
         
-        if (this.token1 && teams[1]) {
-            const position = teams[1].position * spaceWidth;
-            this.token1.style.left = `${position}%`;
+        // Update team 1 score
+        if (this.team1ScoreEl && teams[1]) {
+            this.team1ScoreEl.textContent = teams[1].position;
         }
     }
     
     /**
-     * Animate token movement and celebrate scoring
+     * Update progress indicators showing how close teams are to winning
+     * @param {Array} teams - Array of team objects with positions
+     */
+    updateProgressBars(teams) {
+        if (!teams || !teams.length) return;
+        
+        // Get or create progress bars
+        let team0Progress = this.team0StatusEl ? this.team0StatusEl.querySelector('.team-progress') : null;
+        let team1Progress = this.team1StatusEl ? this.team1StatusEl.querySelector('.team-progress') : null;
+        
+        // Create progress bars if they don't exist
+        if (this.team0StatusEl && !team0Progress) {
+            team0Progress = document.createElement('div');
+            team0Progress.className = 'team-progress';
+            this.team0StatusEl.appendChild(team0Progress);
+        }
+        
+        if (this.team1StatusEl && !team1Progress) {
+            team1Progress = document.createElement('div');
+            team1Progress.className = 'team-progress';
+            this.team1StatusEl.appendChild(team1Progress);
+        }
+        
+        // Update progress bar widths
+        if (team0Progress && teams[0]) {
+            const percentage = (teams[0].position / this.boardLength) * 100;
+            team0Progress.style.width = `${Math.min(percentage, 100)}%`;
+        }
+        
+        if (team1Progress && teams[1]) {
+            const percentage = (teams[1].position / this.boardLength) * 100;
+            team1Progress.style.width = `${Math.min(percentage, 100)}%`;
+        }
+    }
+    
+    /**
+     * Animate a score change with visual effects
      * @param {number} teamIndex - Index of the team (0 or 1)
-     * @param {number} fromPosition - Starting position
-     * @param {number} toPosition - Ending position
-     * @param {boolean} celebrate - Whether to celebrate after moving
-     * @returns {Promise} A promise that resolves when animation is complete
+     * @param {boolean} celebrate - Whether to add celebration animation
      */
-    animateTokenMovement(teamIndex, fromPosition, toPosition, celebrate = false) {
-        return new Promise((resolve) => {
-            const token = teamIndex === 0 ? this.token0 : this.token1;
-            if (!token) {
-                resolve();
-                return;
+    animateScoreChange(teamIndex, celebrate = false) {
+        const scoreEl = teamIndex === 0 ? this.team0ScoreEl : this.team1ScoreEl;
+        const statusEl = teamIndex === 0 ? this.team0StatusEl : this.team1StatusEl;
+        
+        if (!scoreEl || !statusEl) return;
+        
+        // Flash effect on the score
+        scoreEl.classList.add('score-flash');
+        
+        // Add celebration effect if requested
+        if (celebrate) {
+            statusEl.classList.add('celebrating');
+        }
+        
+        // Remove classes after animation completes
+        setTimeout(() => {
+            scoreEl.classList.remove('score-flash');
+            if (celebrate) {
+                statusEl.classList.remove('celebrating');
             }
-            
-            const spaceWidth = 100 / this.boardLength;
-            const fromPercent = fromPosition * spaceWidth;
-            const toPercent = toPosition * spaceWidth;
-            
-            // Set initial position
-            token.style.left = `${fromPercent}%`;
-            
-            // Add transition end listener
-            const handleTransitionEnd = () => {
-                token.removeEventListener('transitionend', handleTransitionEnd);
-                resolve();
-            };
-            
-            token.addEventListener('transitionend', handleTransitionEnd);
-            
-            // Trigger animation by setting new position after a short delay
-            setTimeout(() => {
-                token.style.left = `${toPercent}%`;
-                
-                // If celebration is requested, do it after the movement
-                if (celebrate) {
-                    token.addEventListener('transitionend', () => {
-                        this.celebrateToken(teamIndex, false);
-                    }, { once: true });
-                }
-            }, 50);
-        });
+        }, 1500);
     }
     
     /**
-     * Create a celebration animation when a team wins or scores points
-     * @param {number} teamIndex - Index of the team that gets points
-     * @param {boolean} isWin - Whether this is a win celebration (longer) or point celebration
+     * Create a celebration animation when a team wins
+     * @param {number} teamIndex - Index of the team that wins
+     * @returns {Promise} Promise that resolves when animation completes
      */
-    celebrateToken(teamIndex, isWin = false) {
-        const token = teamIndex === 0 ? this.token0 : this.token1;
-        if (!token) return;
+    celebrateWin(teamIndex) {
+        const statusEl = teamIndex === 0 ? this.team0StatusEl : this.team1StatusEl;
+        if (!statusEl) return Promise.resolve();
         
-        // Add celebration class
-        token.classList.add('celebrating');
+        statusEl.classList.add('win-celebrating');
         
-        // Remove after animation completes
-        setTimeout(() => {
-            token.classList.remove('celebrating');
-        }, isWin ? 3000 : 1800);
-        
-        return new Promise(resolve => setTimeout(resolve, isWin ? 3000 : 1800));
+        return new Promise(resolve => {
+            setTimeout(() => {
+                statusEl.classList.remove('win-celebrating');
+                resolve();
+            }, 3000);
+        });
     }
 }

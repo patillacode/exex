@@ -58,6 +58,14 @@ export default class TeamManager {
         if (this.team1Status && this.teams[1]) {
             this.updateSingleTeam(this.team1Status, this.teams[1], 1);
         }
+        
+        // Add title attribute for longer team names
+        const teamNameElements = document.querySelectorAll('.team-name');
+        teamNameElements.forEach(el => {
+            if (el.textContent.length > 12) { // Add tooltip for longer names
+                el.title = el.textContent;
+            }
+        });
     }
     
     /**
@@ -71,19 +79,42 @@ export default class TeamManager {
         const nameElement = element.querySelector(this.config.nameSelector);
         if (nameElement) {
             nameElement.textContent = team.name;
+            
+            // Adjust font size for long team names
+            if (team.name.length > 15) {
+                nameElement.style.fontSize = '0.85rem';
+            } else if (team.name.length > 10) {
+                nameElement.style.fontSize = '0.95rem';
+            } else {
+                nameElement.style.fontSize = '1rem';
+            }
         }
         
-        // Update position
+        // Update position (score)
         const positionElement = element.querySelector(this.config.positionSelector);
         if (positionElement) {
             positionElement.textContent = team.position;
+            // Update the actual score element too if it exists
+            const scoreElement = index === 0 ? document.getElementById('team0-score') : document.getElementById('team1-score');
+            if (scoreElement) {
+                scoreElement.textContent = team.position;
+            }
         }
         
         // Highlight current team
         if (index === this.currentTeamIndex) {
             element.classList.add(this.config.currentTeamClass);
+            // Add vibrant styling to highlight current team
+            element.style.fontWeight = 'bold';
+            element.style.border = '2px solid #5B8AF5';
+            element.style.backgroundColor = 'rgba(91, 138, 245, 0.1)';
+            element.style.boxShadow = '0 0 10px rgba(91, 138, 245, 0.3)';
         } else {
             element.classList.remove(this.config.currentTeamClass);
+            element.style.fontWeight = 'normal';
+            element.style.border = '1px solid #E4E8F0';
+            element.style.backgroundColor = '#FFF';
+            element.style.boxShadow = 'none';
         }
     }
     
@@ -95,7 +126,7 @@ export default class TeamManager {
         if (this.teams && this.teams[this.currentTeamIndex]) {
             return this.teams[this.currentTeamIndex].name;
         }
-        return 'Equipo';
+        return this.currentTeamIndex === 0 ? 'Equipo 1' : 'Equipo 2';
     }
     
     /**
@@ -107,7 +138,7 @@ export default class TeamManager {
         if (this.teams && this.teams[index]) {
             return this.teams[index].name;
         }
-        return 'Equipo';
+        return index === 0 ? 'Equipo 1' : 'Equipo 2';
     }
     
     /**
@@ -125,9 +156,38 @@ export default class TeamManager {
     
     /**
      * Announce the current team's turn
+     * @param {string} [activity=''] - Optional activity description
      * @returns {string} - Announcement message
      */
-    announceCurrentTeam() {
-        return `Turno de ${this.getCurrentTeamName()}`;
+    announceCurrentTeam(activity = '') {
+        const teamName = this.getCurrentTeamName();
+        if (activity) {
+            return `${teamName} - ${activity}`;
+        }
+        return `Turno de ${teamName}`;
+    }
+    
+    /**
+     * Get the other (non-current) team 
+     * @returns {Object|null} - The other team object or null if not available
+     */
+    getOtherTeam() {
+        const otherIndex = 1 - this.currentTeamIndex;
+        if (this.teams && this.teams[otherIndex]) {
+            return this.teams[otherIndex];
+        }
+        return null;
+    }
+    
+    /**
+     * Get the other (non-current) team's name
+     * @returns {string} - Name of the other team
+     */
+    getOtherTeamName() {
+        const otherIndex = 1 - this.currentTeamIndex;
+        if (this.teams && this.teams[otherIndex]) {
+            return this.teams[otherIndex].name;
+        }
+        return this.currentTeamIndex === 0 ? 'Equipo 2' : 'Equipo 1';
     }
 }

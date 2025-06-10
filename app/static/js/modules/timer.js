@@ -100,17 +100,28 @@ export default class TimerManager {
         }
         
         this.isRunning = false;
+        
+        // Notify for cleanup (stop sounds etc.)
+        if (typeof this.config.onBeep === 'function') {
+            this.config.onTick({
+                timeLeft: this.timeLeft,
+                initialDuration: this.duration,
+                percentageLeft: (this.timeLeft / this.duration) * 100,
+                isStopped: true
+            });
+        }
     }
     
     /**
      * Reset the timer UI without changing the duration
      */
     reset() {
-        // Stop any running timer
+        // Stop any running timer (which also cleans up intervals)
         this.stop();
         
         // Reset time left to duration
         this.timeLeft = this.duration;
+        this.isRunning = false;
         
         // Reset UI
         this.updateTimerDisplay();
@@ -124,10 +135,12 @@ export default class TimerManager {
      * Handle timer completion
      */
     complete() {
+        // Stop timer first (which also cleans up intervals)
         this.stop();
         
         // Set time to 0
         this.timeLeft = 0;
+        this.isRunning = false;
         
         // Call the completion callback
         if (typeof this.config.onComplete === 'function') {
@@ -139,17 +152,32 @@ export default class TimerManager {
      * Start the beeping pattern
      */
     startBeeping() {
+        if (!this.isRunning) {
+            return; // Don't start beeping if timer isn't running
+        }
+        
         // Initial beep
-        this.triggerBeep();
+        if (typeof this.config.onBeep === 'function') {
+            this.config.onBeep();
+        }
         
         // Clear any existing interval
         if (this.beepInterval) {
             clearInterval(this.beepInterval);
+            this.beepInterval = null;
         }
         
         // Set up beeping interval
         this.beepInterval = setInterval(() => {
-            this.triggerBeep();
+            if (!this.isRunning) {
+                clearInterval(this.beepInterval);
+                this.beepInterval = null;
+                return;
+            }
+            
+            if (typeof this.config.onBeep === 'function') {
+                this.config.onBeep();
+            }
             
             // Update the interval if beep rate has changed
             if (this.isRunning) {
