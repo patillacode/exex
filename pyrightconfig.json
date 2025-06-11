@@ -1,0 +1,21 @@
+{
+    "reportMissingImports": false,
+    "reportMissingTypeStubs": false,
+    "reportGeneralTypeIssues": false,
+    "reportAttributeAccessIssue": false,
+    "reportUnknownArgumentType": false,
+    "reportUnknownMemberType": false,
+    "reportUnknownVariableType": false,
+    "reportUnknownParameterType": false,
+    "reportInvalidTypeVarUse": false,
+    "typeCheckingMode": "off",
+    "useLibraryCodeForTypes": true,
+    "include": [
+        "."
+    ],
+    "exclude": [
+        "**/node_modules",
+        "**/__pycache__",
+        "**/migrations"
+    ]
+}

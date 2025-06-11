@@ -1,0 +1,10 @@
+This is a placeholder for the buzzer.mp3 sound file.
+
+To complete the implementation of the game:
+1. Replace this placeholder with an actual buzzer.mp3 sound file (1-2 seconds long)
+2. You can find free sound files from sources like Freesound.org
+3. Make sure the file is named exactly "buzzer.mp3" and is in this directory
+4. The file should be small (under 100KB) for optimal performance
+5. The buzzer should be distinct from the beep sound and more attention-grabbing
+
+Without this sound file, the game's end-of-timer functionality will not work properly.

@@ -5,37 +5,36 @@ This module initializes the Flask application with appropriate configurations
 and registers all necessary blueprints and extensions.
 """
 
+import json
 import os
+import secrets
 from datetime import datetime
 
 from flask import Flask
+from flask_wtf.csrf import CSRFProtect
 
 
 def create_app(test_config=None):
-    """
-    Create and configure the Flask application.
-
-    Args:
-        test_config: Configuration dictionary for testing (optional)
-
-    Returns:
-        app: Configured Flask application instance
-    """
-    # Create Flask app with instance_relative_config for configurations
+    """Create and configure the Flask application."""
     app = Flask(__name__, instance_relative_config=True)
 
-    # Set default configuration
+    # Default configuration
     app.config.from_mapping(
-        SECRET_KEY=os.environ.get("SECRET_KEY", "dev-key-for-development-only"),
-        GAME_DATA_PATH=os.path.join(app.root_path, "words.json"),
+        SECRET_KEY=os.environ.get("SECRET_KEY", secrets.token_hex(32)),
+        WORDS_FILE=os.path.join(app.root_path, "words.json"),
+        MAX_POINTS=10,  # Default maximum points to win
+        WTF_CSRF_TIME_LIMIT=3600,  # 1 hour CSRF token expiry
     )
 
     if test_config is None:
-        # Load instance config if it exists and not testing
+        # Load the instance config, if it exists, when not testing
         app.config.from_pyfile("config.py", silent=True)
     else:
-        # Load test config if passed
+        # Load the test config if passed in
         app.config.from_mapping(test_config)
+
+    # Initialize CSRF protection
+    CSRFProtect(app)
 
     # Ensure the instance folder exists
     try:
@@ -43,63 +42,28 @@ def create_app(test_config=None):
     except OSError:
         pass
 
-    # Register error handlers
-    register_error_handlers(app)
+    # Load game words
+    with open(app.config["WORDS_FILE"], "r", encoding="utf-8") as f:
+        app.words = json.load(f)["words"]
 
-    # Register routes
-    from app.routes import main
+    # Register blueprints
+    from app.routes.game import bp as game_bp
 
-    app.register_blueprint(main.bp)
+    app.register_blueprint(game_bp)
+
+    # Add simple health check route
+    @app.route("/health")
+    def health_check():
+        return {"status": "healthy", "timestamp": datetime.now().isoformat()}
 
     # Register context processors
-    register_context_processors(app)
+    @app.context_processor
+    def utility_processor():
+        def now(format_str=None):
+            if format_str == "year":
+                return datetime.now().year
+            return datetime.now()
 
-    # Register CLI commands if needed
-    register_commands(app)
+        return dict(now=now)
 
     return app
-
-
-def register_error_handlers(app):
-    """
-    Register custom error handlers for the application.
-
-    Args:
-        app: Flask application instance
-    """
-
-    @app.errorhandler(404)
-    def page_not_found(e):
-        return {"error": "Page not found"}, 404
-
-    @app.errorhandler(500)
-    def server_error(e):
-        return {"error": "Internal server error"}, 500
-
-
-def register_context_processors(app):
-    """
-    Register context processors for templates.
-
-    Args:
-        app: Flask application instance
-    """
-
-    @app.context_processor
-    def inject_now():
-        return {"now": datetime.now}
-
-
-def register_commands(app):
-    """
-    Register CLI commands with the application.
-
-    Args:
-        app: Flask application instance
-    """
-
-    @app.cli.command("init-db")
-    def init_db_command():
-        """Initialize game data."""
-        # Could be used to reset game data or validate JSON files
-        print("Game data initialized.")

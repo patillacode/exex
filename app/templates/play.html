@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block title %}Expresión Exprés - Jugando{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="game-container" data-points-to-win="{{ points_to_win }}">
+    <div class="game-header">
+        <div class="game-status">
+            <div class="team team-1 {% if active_team == 1 %}active{% endif %}">
+                <div class="team-name">{{ team1.name }}</div>
+                <div class="team-score">{{ team1.points }} puntos</div>
+            </div>
+            <div class="vs-label">VS</div>
+            <div class="team team-2 {% if active_team == 2 %}active{% endif %}">
+                <div class="team-name">{{ team2.name }}</div>
+                <div class="team-score">{{ team2.points }} puntos</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-board">
+        <div class="progress-container">
+            <div class="progress-track">
+                <div class="team1-progress" style="width: {{ (team1.points / points_to_win) * 100 }}%"></div>
+                <div class="team2-progress" style="width: {{ (team2.points / points_to_win) * 100 }}%"></div>
+            </div>
+            <div class="finish-line"></div>
+        </div>
+        
+        <div id="board-markers" class="board-markers">
+            {% for i in range(points_to_win + 1) %}
+            <div class="marker {% if i == 0 %}start{% elif i == points_to_win %}finish{% endif %}">
+                {% if i == 0 %}
+                <span>Inicio</span>
+                {% elif i == points_to_win %}
+                <span>Meta</span>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Game screens - only one will be shown at a time based on game state -->
+    <div class="game-screen game-ready active" data-state="ready">
+        <h3>Turno de {{ team1.name if active_team == 1 else team2.name }}</h3>
+        <p>Prepárate para ver una palabra. Describe esta palabra a tu compañero de equipo.</p>
+        <p class="instructions"><strong>Recuerda:</strong> No puedes usar partes de la palabra ni rimas.</p>
+        <button id="show-word-btn" class="btn btn-primary btn-large">Ver Palabra</button>
+    </div>
+
+    <div class="game-screen game-playing" data-state="playing">
+        <div class="word-display">
+            <span id="current-word" class="word-text"></span>
+        </div>
+        <div class="timer-indicator">
+            <div class="timer-visual">
+                <div class="timer-beeps"></div>
+            </div>
+        </div>
+        <button id="word-guessed-btn" class="btn btn-success btn-large">¡Adivinado!</button>
+    </div>
+
+    <div class="game-screen game-guessed" data-state="guessed">
+        <h3>¡Palabra adivinada!</h3>
+        <p>Pasa el dispositivo al otro equipo.</p>
+        <p>El equipo {{ team2.name if active_team == 1 else team1.name }} debe confirmar que la palabra fue adivinada correctamente.</p>
+        <div class="word-display">
+            <span class="word-text" id="guessed-word"></span>
+        </div>
+        <button id="confirm-word-btn" class="btn btn-primary btn-large">Confirmar</button>
+    </div>
+
+    <div class="game-screen game-timer-ended" data-state="timer_ended">
+        <h3>¡Tiempo agotado!</h3>
+        <p>El equipo {{ team1.name if active_team == 1 else team2.name }} no ha adivinado la palabra a tiempo.</p>
+        <p>El equipo {{ team2.name if active_team == 1 else team1.name }} gana 1 punto.</p>
+        <div class="word-display">
+            <span class="word-text" id="missed-word"></span>
+        </div>
+        <p>El equipo {{ team2.name if active_team == 1 else team1.name }} puede intentar adivinar la palabra para ganar un punto extra:</p>
+        <div class="extra-point-buttons">
+            <button id="extra-point-guessed-btn" class="btn btn-success">¡La adivinamos!</button>
+            <button id="extra-point-missed-btn" class="btn btn-danger">No la adivinamos</button>
+        </div>
+    </div>
+
+    <div class="game-screen game-win" data-state="win">
+        <h2>¡Fin del juego!</h2>
+        <div class="winner-display">
+            <h3>¡El equipo <span id="winner-team-name"></span> ha ganado!</h3>
+            <div class="confetti-container" id="confetti"></div>
+        </div>
+        <div class="final-score">
+            <div>{{ team1.name }}: <span id="team1-final-score">{{ team1.points }}</span> puntos</div>
+            <div>{{ team2.name }}: <span id="team2-final-score">{{ team2.points }}</span> puntos</div>
+        </div>
+        <div class="end-game-actions">
+            <button id="play-again-btn" class="btn btn-primary">Jugar de nuevo</button>
+            <a href="{{ url_for('game.setup') }}" class="btn btn-secondary">Nueva configuración</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
+{% endblock %}

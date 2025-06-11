@@ -19,13 +19,17 @@ Expresión Exprés is a Spanish word-guessing party game where:
 - Visual board for tracking team progress
 - Word selection from a curated Spanish expression list
 - Simple touch interface for easy gameplay during parties
+- Responsive UI that works on mobile devices and desktop browsers
+- CSRF protection for security
 
 ## 🛠️ Tech Stack
 
-- **Backend**: Flask (Python)
-- **Frontend**: HTML, CSS, JavaScript (Vanilla)
-- **Containerization**: Docker
-- **Data Storage**: JSON file (in-memory)
+- **Backend**: Flask (Python 3.10+)
+- **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
+- **Security**: Flask-WTF for CSRF protection
+- **Containerization**: Docker & Docker Compose
+- **Data Storage**: JSON file (in-memory session)
+- **Testing**: pytest with coverage reports
 
 ## 🚀 Getting Started
 
@@ -34,7 +38,34 @@ Expresión Exprés is a Spanish word-guessing party game where:
 - Python 3.10 or higher
 - Docker and Docker Compose (optional, for containerized deployment)
 
-### Local Development
+### Method 1: Using Make (Recommended)
+
+The project includes a Makefile with helpful commands for development:
+
+1. Clone this repository
+   ```bash
+   git clone <repository-url>
+   cd exex
+   ```
+
+2. Install dependencies and create a virtual environment
+   ```bash
+   make install
+   ```
+
+3. Run the application
+   ```bash
+   make run
+   ```
+
+4. Run tests (optional)
+   ```bash
+   make test
+   ```
+
+5. Open your browser and navigate to `http://localhost:5000`
+
+### Method 2: Manual Setup
 
 1. Clone this repository
    ```bash
@@ -60,37 +91,60 @@ Expresión Exprés is a Spanish word-guessing party game where:
 
 5. Open your browser and navigate to `http://localhost:5000`
 
-### Docker Deployment
+### Method 3: Docker Deployment
 
 1. Build and run with Docker Compose
    ```bash
    docker-compose up --build
    ```
+   or use the Make command:
+   ```bash
+   make docker-up
+   ```
 
 2. Access the application at `http://localhost:5000`
 
+## 🔍 Sound Files
+
+Before playing, you need to add two sound files to the application:
+
+1. Create or download a `beep.mp3` file (short beep sound, <0.5 seconds)
+2. Create or download a `buzzer.mp3` file (buzzer sound, 1-2 seconds)
+3. Place both files in the `app/static/sounds/` directory
+4. You can find free sounds at sites like [Freesound](https://freesound.org/)
+
 ## 🎮 How to Play
 
-1. **Setup**: Enter names for two teams and customize the board size if desired
+1. **Setup**: Enter names for two teams and set the number of points to win
 2. **Turn Flow**:
    - The active team taps "Ver Palabra" (Show Word)
    - The clue-giver describes the word to their teammate
    - The guesser tries to identify the word before the timer runs out
    - Tap "¡Adivinado!" (Guessed) if successful, or wait for the timer to end
 3. **Advancement**:
-   - If guessed correctly, the team advances one space
-   - If time runs out, the opposing team advances one space
-4. **Winning**: The first team to reach the final space wins
+   - If guessed correctly, the team advances one point
+   - If time runs out, the opposing team advances one point
+   - The opposing team can try to guess the missed word for an extra point
+4. **Winning**: The first team to reach the target number of points wins
 
 ## 🔧 Project Structure
 
 ```
 /exex
   /app                    # Flask application
-    /static               # Static assets (CSS, JS, sounds)
+    /routes               # Application routes organized by feature
+    /static               # Static assets 
+      /css                # Stylesheets
+      /js                 # JavaScript files
+      /sounds             # Sound files for game (beep.mp3 & buzzer.mp3)
+      /images             # Image assets
     /templates            # HTML templates
-    words.json            # Game words/expressions
+    __init__.py          # Flask app initialization
+    words.json           # Game words/expressions
+  /tests                  # Test suite
   Dockerfile              # Docker configuration
+  docker-compose.yml      # Docker Compose configuration
+  Makefile                # Development commands
   requirements.txt        # Python dependencies
   run.py                  # Application entry point
 ```
@@ -112,6 +166,24 @@ The application is optimized for:
 - Chrome/Safari on iOS
 - Chrome on Android
 - Modern desktop browsers (Chrome, Firefox, Safari, Edge)
+
+## 🧪 Testing
+
+Run the test suite using:
+```bash
+make test
+```
+
+Or with coverage report:
+```bash
+make coverage
+```
+
+## 🔒 Security Features
+
+- CSRF protection on all forms and API endpoints
+- Session-based game state management
+- Input validation and sanitization
 
 ## 📄 License
 

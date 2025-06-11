@@ -1,0 +1,9 @@
+This is a placeholder for the beep.mp3 sound file.
+
+To complete the implementation of the game:
+1. Replace this placeholder with an actual beep.mp3 sound file (short, less than 0.5 seconds)
+2. You can find free sound files from sources like Freesound.org
+3. Make sure the file is named exactly "beep.mp3" and is in this directory
+4. The file should be small (under 100KB) for optimal performance
+
+Without this sound file, the game's timer functionality will not work properly.
