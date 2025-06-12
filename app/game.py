@@ -1,29 +1,41 @@
 """
 Game logic module for Expresión Exprés.
 
-This module contains the core game logic and state management functions
-for the Expresión Exprés game.
+This module contains core game logic and state management functions
+for the Expresión Exprés word-guessing game.
 """
 
 import json
 import random
-from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
 
-class WordManager:
-    """Manages the game's word collection, selection, and tracking."""
+class GameState:
+    """Manages the state for an Expresión Exprés game session."""
 
-    def __init__(self, words_data: List[str]):
+    def __init__(
+        self, team1: str, team2: str, words: List[str], target_score: int = 10
+    ):
         """
-        Initialize the word manager.
+        Initialize a new game state.
 
         Args:
-            words_data: List of words/expressions for the game
+            team1: Name of the first team
+            team2: Name of the second team
+            words: List of words/expressions for the game
+            target_score: Points needed to win the game
         """
-        self.all_words = words_data
-        self.used_words: List[str] = []
+        self.teams = [{"name": team1, "score": 0}, {"name": team2, "score": 0}]
+        self.current_team_index = 0
+        self.target_score = target_score
+        self.available_words = words
+        self.used_words = []
+        self.round_number = 1
+        self.current_word = None
+        self.previous_word = None
+        self.game_phase = "pre_round"  # pre_round, guessing, confirming, extra_point
+        self.created_at = datetime.now()
 
     def get_random_word(self) -> Optional[str]:
         """
@@ -32,7 +44,9 @@ class WordManager:
         Returns:
             A random word, or None if all words have been used
         """
-        available_words = [w for w in self.all_words if w not in self.used_words]
+        available_words = [
+            word for word in self.available_words if word not in self.used_words
+        ]
 
         if not available_words:
             return None
@@ -46,171 +60,90 @@ class WordManager:
         Args:
             word: The word to mark as used
         """
-        if word not in self.used_words and word in self.all_words:
+        if word and word not in self.used_words:
             self.used_words.append(word)
 
-    def reset(self) -> None:
-        """Reset the used words list."""
-        self.used_words = []
-
-    @property
-    def available_count(self) -> int:
-        """Get the count of available words."""
-        return len(self.all_words) - len(self.used_words)
-
-
-@dataclass
-class Team:
-    """Represents a team in the game."""
-
-    name: str
-    position: int = 0
-
-    def advance(self) -> None:
-        """Move the team forward one position on the board."""
-        self.position += 1
-
-
-@dataclass
-class GameState:
-    """
-    Represents the complete state of an Expresión Exprés game.
-
-    This class manages the game's state including teams, positions,
-    current turn, and game progression.
-    """
-
-    teams: List[Team] = field(default_factory=list)
-    current_team_index: int = 0
-    round_number: int = 1
-    board_length: int = 10
-    word_manager: Optional[WordManager] = None
-    created_at: datetime = field(default_factory=datetime.now)
-
-    @classmethod
-    def create_new_game(
-        cls, team1_name: str, team2_name: str, words: List[str], board_length: int = 10
-    ) -> "GameState":
+    def award_point(self, team_index: int) -> bool:
         """
-        Create a new game with the given team names and words.
+        Award a point to the specified team and check for winner.
 
         Args:
-            team1_name: Name of the first team
-            team2_name: Name of the second team
-            words: List of words/expressions for the game
-            board_length: Number of spaces on the board
+            team_index: Index of the team (0 or 1)
 
         Returns:
-            A new GameState instance
+            True if this team has won the game, False otherwise
         """
-        teams = [Team(team1_name), Team(team2_name)]
-        word_manager = WordManager(words)
+        if team_index not in [0, 1]:
+            raise ValueError("Team index must be 0 or 1")
 
-        return cls(
-            teams=teams,
-            current_team_index=0,
-            round_number=1,
-            board_length=board_length,
-            word_manager=word_manager,
-        )
+        self.teams[team_index]["score"] += 1
 
-    def next_turn(self) -> None:
-        """
-        Advance to the next team's turn.
+        # Check if this team has won
+        return self.teams[team_index]["score"] >= self.target_score
 
-        This method switches the current team and updates the round number
-        if necessary.
-        """
-        self.current_team_index = 1 - self.current_team_index  # Toggle between 0 and 1
+    def switch_team(self) -> None:
+        """Switch to the other team."""
+        self.current_team_index = 1 - self.current_team_index
 
-        # If we've gone through both teams, increment the round
-        if self.current_team_index == 0:
-            self.round_number += 1
+    def get_opposing_team_index(self) -> int:
+        """Get the index of the team that's not currently playing."""
+        return 1 - self.current_team_index
 
-    def current_team(self) -> Team:
-        """Get the currently active team."""
-        return self.teams[self.current_team_index]
-
-    def other_team(self) -> Team:
-        """Get the team that's not currently active."""
-        return self.teams[1 - self.current_team_index]
-
-    def handle_turn_result(self, success: bool, word: str) -> Optional[Team]:
-        """
-        Process the result of a turn and check for a winner.
-
-        Args:
-            success: Whether the current team guessed correctly
-            word: The word that was in play
-
-        Returns:
-            The winning team if the game is over, otherwise None
-        """
-        # Mark the word as used
-        if self.word_manager:
-            self.word_manager.mark_word_used(word)
-
-        # Update positions based on result
-        if success:
-            # Current team advances
-            self.current_team().advance()
-        else:
-            # Other team advances
-            self.other_team().advance()
-
-        # Check for winner
-        for team in self.teams:
-            if team.position >= self.board_length:
-                return team
-
-        return None
+    def next_round(self) -> None:
+        """Advance to the next round."""
+        self.round_number += 1
 
     def to_dict(self) -> Dict[str, Any]:
         """
-        Convert the game state to a dictionary for serialization.
+        Convert game state to a dictionary for serialization.
 
         Returns:
             Dictionary representation of the game state
         """
         return {
-            "teams": [
-                {"name": team.name, "position": team.position} for team in self.teams
-            ],
-            "current_team": self.current_team_index,
-            "round": self.round_number,
-            "board_length": self.board_length,
-            "used_words": self.word_manager.used_words if self.word_manager else [],
-            "available_words_count": self.word_manager.available_count
-            if self.word_manager
-            else 0,
+            "teams": self.teams,
+            "current_team_index": self.current_team_index,
+            "target_score": self.target_score,
+            "used_words": self.used_words,
+            "available_words": self.available_words,
+            "round_number": self.round_number,
+            "current_word": self.current_word,
+            "previous_word": self.previous_word,
+            "game_phase": self.game_phase,
             "created_at": self.created_at.isoformat(),
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any], words: List[str]) -> "GameState":
+    def from_dict(cls, data: Dict[str, Any]) -> "GameState":
         """
         Create a GameState instance from a dictionary.
 
         Args:
             data: Dictionary containing game state data
-            words: List of all words/expressions for the game
 
         Returns:
             A GameState instance
         """
-        teams = [Team(t["name"], t["position"]) for t in data["teams"]]
-
-        word_manager = WordManager(words)
-        word_manager.used_words = data.get("used_words", [])
-
-        return cls(
-            teams=teams,
-            current_team_index=data["current_team"],
-            round_number=data["round"],
-            board_length=data["board_length"],
-            word_manager=word_manager,
-            created_at=datetime.fromisoformat(data["created_at"]),
+        # Create an instance with required parameters
+        teams = data["teams"]
+        game_state = cls(
+            team1=teams[0]["name"],
+            team2=teams[1]["name"],
+            words=data["available_words"],
+            target_score=data["target_score"],
         )
+
+        # Update remaining properties
+        game_state.teams = teams
+        game_state.current_team_index = data["current_team_index"]
+        game_state.used_words = data["used_words"]
+        game_state.round_number = data["round_number"]
+        game_state.current_word = data["current_word"]
+        game_state.previous_word = data["previous_word"]
+        game_state.game_phase = data["game_phase"]
+        game_state.created_at = datetime.fromisoformat(data["created_at"])
+
+        return game_state
 
 
 def generate_timer_duration() -> int:
@@ -240,3 +173,30 @@ def load_words_from_file(file_path: str) -> List[str]:
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
         return data.get("words", [])
+
+
+def get_client_game_state(game_state: GameState) -> Dict[str, Any]:
+    """
+    Create a version of the game state safe for client-side use.
+
+    Args:
+        game_state: Game state object
+
+    Returns:
+        Dictionary with relevant game state for the client
+    """
+    state_dict = game_state.to_dict()
+
+    # Create a simplified version with only what the client needs
+    return {
+        "teams": state_dict["teams"],
+        "current_team_index": state_dict["current_team_index"],
+        "target_score": state_dict["target_score"],
+        "round_number": state_dict["round_number"],
+        "current_word": state_dict["current_word"],
+        "previous_word": state_dict["previous_word"],
+        "game_phase": state_dict["game_phase"],
+        "words_remaining": len(state_dict["available_words"])
+        - len(state_dict["used_words"]),
+        "words_used": len(state_dict["used_words"]),
+    }

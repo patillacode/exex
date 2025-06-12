@@ -1,89 +1,38 @@
 {% extends "base.html" %}
 
-{% block title %}Expresión Exprés - Configuración{% endblock %}
+{% block title %}ExEx - ¡Bienvenido!{% endblock %}
 
 {% block content %}
-<section class="setup-container">
-    <div class="game-logo">
-        <h2>🎯 Expresión Exprés</h2>
-    </div>
-    
-    <div class="setup-form">
-        <h3>Configuración del Juego</h3>
-        
-        {% if error %}
-        <div class="error-message">
-            <p>{{ error }}</p>
+<div class="welcome-container">
+    <div class="card">
+        <div class="card-header">
+            <h2 class="">¡Bienvenido a ExEx!</h2>
         </div>
-        {% endif %}
-        
-        <form id="setup-form" action="javascript:void(0);">
-            <div class="form-group">
-                <label for="team1">Equipo 1:</label>
-                <input type="text" id="team1" name="team1" placeholder="Nombre del equipo 1" required maxlength="20">
-            </div>
-            
-            <div class="form-group">
-                <label for="team2">Equipo 2:</label>
-                <input type="text" id="team2" name="team2" placeholder="Nombre del equipo 2" required maxlength="20">
-            </div>
-            
-            <div class="board-config">
-                <label for="board-size">Tamaño del Tablero:</label>
-                <div class="range-container">
-                    <input type="range" id="board-size" name="board-size" min="5" max="15" value="10">
-                    <span id="board-size-value">10 espacios</span>
-                </div>
-            </div>
-            
-            <div class="form-actions">
-                <button type="submit" id="start-game" class="btn btn-primary">¡Comenzar Juego!</button>
-            </div>
-        </form>
-    </div>
-    
-    <div class="rules-accordion">
-        <details>
-            <summary>Reglas del Juego</summary>
-            <div class="rules-content">
-                <h4>🧠 Objetivo del Juego</h4>
-                <p>Dos equipos compiten para adivinar palabras o expresiones. Un equipo gana moviendo su ficha a lo largo del tablero y llegando primero a la meta.</p>
-                
-                <h4>🎮 Flujo del Juego</h4>
-                <p>En cada turno:</p>
-                <ul>
-                    <li>El equipo activo ve una palabra en la pantalla.</li>
-                    <li>Un miembro del equipo (el que da las pistas) debe describir la palabra a su compañero (el que adivina).</li>
-                    <li>El que adivina debe identificar la palabra antes de que se acabe el tiempo.</li>
-                </ul>
-                
-                <h4>Reglas para Dar Pistas:</h4>
-                <ul>
-                    <li>NO uses rimas o palabras que suenen similar.</li>
-                    <li>NO uses raíces o partes de la palabra.</li>
-                </ul>
-                
-                <h4>Éxito:</h4>
-                <p>Si el equipo adivina correctamente antes de que suene el temporizador:</p>
-                <ul>
-                    <li>El equipo avanza su ficha 1 espacio.</li>
-                    <li>El turno pasa al equipo contrario.</li>
-                </ul>
-                
-                <h4>Fracaso:</h4>
-                <p>Si suena el temporizador mientras el equipo aún intenta adivinar:</p>
-                <ul>
-                    <li>El equipo contrario gana 1 punto (avanza su ficha 1 espacio).</li>
-                </ul>
-                
-                <h4>🏁 Ganar el Juego</h4>
-                <p>El primer equipo en mover su ficha hasta el espacio de META gana.</p>
-            </div>
-        </details>
-    </div>
-</section>
-{% endblock %}
+        <div class="card-body">
+            <p class="intro-text">
+                Expresión Exprés es un juego de palabras donde dos equipos compiten por adivinar palabras o expresiones.
+                Pasad el dispositivo entre los equipos para jugar.
+            </p>
 
-{% block extra_js %}
-<script type="module" src="{{ url_for('static', filename='js/modules/setup.js') }}"></script>
+            <div class="game-rules">
+                <h3>Reglas básicas:</h3>
+                <ul>
+                    <li>Dos equipos compiten para adivinar palabras.</li>
+                    <li>El cronómetro emitirá sonidos cada vez más rápidos.</li>
+                    <li>Al describir la palabra, NO puedes usar:
+                        <ul>
+                            <li>Rimas o palabras que suenen igual</li>
+                            <li>Raíces o partes de la palabra</li>
+                        </ul>
+                    </li>
+                    <li>Gana el equipo que primero alcance los puntos establecidos.</li>
+                </ul>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{{ url_for('game.setup') }}" class="btn btn-primary">Comenzar Juego</a>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

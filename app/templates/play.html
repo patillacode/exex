@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block title %}ExEx - Jugando{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/game.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="game-container" data-points-to-win="{{ points_to_win }}">
+    <div class="game-header">
+        <div class="game-status">
+            <div class="team team-1 {% if active_team == 1 %}active{% endif %}">
+                <div class="team-name">{{ team1.name }}</div>
+                <div class="team-score">{{ team1.points }} puntos</div>
+            </div>
+            <div class="vs-label">VS</div>
+            <div class="team team-2 {% if active_team == 2 %}active{% endif %}">
+                <div class="team-name">{{ team2.name }}</div>
+                <div class="team-score">{{ team2.points }} puntos</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-board">
+        <div class="progress-container">
+            <div class="progress-track">
+                <div class="team1-progress" style="width: {{ (team1.points / points_to_win) * 100 }}%"></div>
+                <div class="team2-progress" style="width: {{ (team2.points / points_to_win) * 100 }}%"></div>
+            </div>
+            <div class="finish-line"></div>
+        </div>
+    </div>
+
+    <!-- Game screens - only one will be shown at a time based on game state -->
+    <div class="game-screen game-ready" data-state="ready">
+        <p>Prepárate para ver una palabra. Describe esta palabra a tus compañeros de equipo.</p>
+        <button id="show-word-btn" class="btn btn-primary btn-large">Ver Palabra</button>
+    </div>
+
+    <div class="game-screen game-playing" data-state="playing">
+        <div class="word-display">
+            <span id="current-word" class="word-text"></span>
+        </div>
+        <div class="pass-device-instructions">
+            <p class="instruction-note">Cuando adivines la palabra, pasa el dispositivo al otro equipo</p>
+        </div>
+        <button id="word-guessed-btn" class="btn btn-success btn-large guessed-btn">
+            <span class="guessed-text">¡ADIVINADO!</span>
+            <span class="pass-device-text">Pasar dispositivo →</span>
+        </button>
+    </div>
+
+    <!-- Hidden but kept for compatibility -->
+    <div class="game-screen game-guessed" data-state="guessed" style="display:none">
+        <div class="word-display">
+            <span class="word-text" id="guessed-word"></span>
+        </div>
+        <button id="confirm-word-btn" class="btn btn-primary">Continuar</button>
+    </div>
+
+    <div class="game-screen game-timer-ended" data-state="timer_ended">
+        <h3>¡TIEMPO AGOTADO! - FIN DE LA RONDA</h3>
+        <!-- <div class="timer-ended-summary">
+            <p class="fail-message">El equipo {{ team1.name if active_team == 2 else team2.name }} no ha adivinado la palabra a tiempo.</p>
+            <p class="points-awarded"><strong>El equipo {{ team1.name if active_team == 1 else team2.name }} gana 1 punto automáticamente.</strong></p>
+        </div> -->
+        <!-- <div class="round-info">
+            <p><strong>Nueva ronda:</strong> Después de decidir sobre el punto extra, comenzará una nueva ronda con un nuevo cronómetro.</p>
+        </div> -->
+        <div class="word-display">
+            <span class="word-text" id="missed-word"></span>
+        </div>
+        <div class="extra-point-section">
+            <p><strong>Oportunidad de punto extra</strong></p>
+            <div class="extra-point-buttons">
+                <button id="extra-point-guessed-btn" class="btn btn-success">¡La adivinan! (+1 punto)</button>
+                <button id="extra-point-missed-btn" class="btn btn-danger">¡No la adivinan! (0 puntos)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="game-screen game-win" data-state="win">
+        <h2>¡Fin del juego!</h2>
+        <div class="winner-display">
+            <h3>¡El equipo <span id="winner-team-name"></span> ha ganado!</h3>
+            <div class="confetti-container" id="confetti"></div>
+        </div>
+        <div class="final-score">
+            <div>{{ team1.name }}: <span id="team1-final-score">{{ team1.points }}</span> puntos</div>
+            <div>{{ team2.name }}: <span id="team2-final-score">{{ team2.points }}</span> puntos</div>
+        </div>
+        <div class="end-game-actions">
+            <button id="play-again-btn" class="btn btn-primary">Jugar de nuevo (mismos equipos)</button>
+            <a href="{{ url_for('game.setup') }}" class="btn btn-secondary">Nueva configuración</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/game.js') }}" defer></script>
+{% endblock %}
