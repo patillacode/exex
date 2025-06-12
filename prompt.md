@@ -1,6 +1,10 @@
 The current project will be a web app to play Expresión Exprés
 
-The original rules of the game cna be found in the  `rules.txt` file.
+A very simple folder structure for a flask app has been laid out.
+A `requirements.txt` file for dependencies, and a `Dockerfile` for containerization have also being drafted.
+
+The original rules of the game can be found in the  `rules.txt` file.
+We will be doing a web app implementation of the game Expresión Exprés (ExEx),
 
 The game will be played on a single mobile device that is passed between two teams.
 Each team will take turns guessing words or expressions,
