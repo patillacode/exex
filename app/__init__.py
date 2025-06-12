@@ -21,9 +21,10 @@ def create_app(test_config=None):
     # Default configuration
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", secrets.token_hex(32)),
-        WORDS_FILE=os.path.join(app.root_path, "words.json"),
-        MAX_POINTS=10,  # Default maximum points to win
-        WTF_CSRF_TIME_LIMIT=3600,  # 1 hour CSRF token expiry
+        WORDS_FILE=os.environ.get("WORDS_FILE", os.path.join(app.root_path, "words.json")),
+        MAX_POINTS=int(os.environ.get("MAX_POINTS", 10)),  # Points needed to win
+        WTF_CSRF_TIME_LIMIT=int(os.environ.get("CSRF_TIME_LIMIT", 3600)),  # CSRF token expiry
+        ALLOWED_HOSTS=os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","),
     )
 
     if test_config is None:
@@ -54,7 +55,11 @@ def create_app(test_config=None):
     # Add simple health check route
     @app.route("/health")
     def health_check():
-        return {"status": "healthy", "timestamp": datetime.now().isoformat()}
+        return {
+            "status": "healthy",
+            "timestamp": datetime.now().isoformat(),
+            "environment": os.environ.get("FLASK_ENV", "production")
+        }
 
     # Register context processors
     @app.context_processor

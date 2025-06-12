@@ -218,8 +218,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // For testing: a shorter timer (5-15 seconds)
         // const actualTimerDuration = (Math.floor(Math.random() * (15 - 5 + 1)) + 5) * 1000;
 
-        console.log(`Timer started with duration: ${actualTimerDuration / 1000} seconds`);
-
         // Reset timer visual
         if (timerBeepsEl) {
             timerBeepsEl.style.width = '0%';
@@ -236,13 +234,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Calculate current beep interval based on progress
-            const currentBeepInterval = maxBeepInterval - (progress * (maxBeepInterval - minBeepInterval));
-
-            // Show elapsed time in console for debugging
-            if (progress % 0.1 < 0.01) {
-                console.log(`Timer: ${Math.round(progress * 100)}% (${Math.round(elapsedTime / 1000)}s)`);
-            }
-
+            // const currentBeepInterval = maxBeepInterval - (progress * (maxBeepInterval - minBeepInterval));
+            const currentBeepInterval = 2000
             // Determine beep phase based on progress
             if (progress < 0.5) {
                 beepPhase = 1; // One beep per interval

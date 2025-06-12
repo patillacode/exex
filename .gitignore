@@ -46,7 +46,9 @@ Thumbs.db
 instance/
 .webassets-cache
 .env
+.env.production
 .flaskenv
+!.env.example
 
 # Test coverage
 .coverage
