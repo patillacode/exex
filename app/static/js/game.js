@@ -28,14 +28,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Game control buttons
     const showWordBtn = document.getElementById('show-word-btn');
     const wordGuessedBtn = document.getElementById('word-guessed-btn');
-    const confirmWordBtn = document.getElementById('confirm-word-btn');
     const extraPointGuessedBtn = document.getElementById('extra-point-guessed-btn');
     const extraPointMissedBtn = document.getElementById('extra-point-missed-btn');
     const playAgainBtn = document.getElementById('play-again-btn');
 
     // Game state and score elements
     const currentWordElement = document.getElementById('current-word');
-    const guessedWordElement = document.getElementById('guessed-word');
     const missedWordElement = document.getElementById('missed-word');
     const team1ProgressEl = document.querySelector('.team1-progress');
     const team2ProgressEl = document.querySelector('.team2-progress');
@@ -50,15 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let buzzerSound;
 
     // Timer configuration
-    const minBeepInterval = 100; // ms between beeps at fastest
     const maxBeepInterval = 2000; // ms between beeps at start
-    // Use commented line below for actual gameplay (~30-90 seconds)
-    // const timerDuration = Math.floor(Math.random() * (90 - 30 + 1)) + 30; // 30-90 seconds
-    // Use shorter time for testing (5-10 seconds)
-    const timerDuration = Math.floor(Math.random() * (10 - 5 + 1)) + 5; // 5-10 seconds
     let timerStartTime;
-    let nextBeepTime;
-    let beepInterval = maxBeepInterval;
     let beepPhase = 1; // 1, 2, 3 (number of beeps per interval)
 
     // Points to win - retrieved from the data-points-to-win attribute
@@ -78,11 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
         // Add event listeners to buttons
         showWordBtn.addEventListener('click', startTurn);
         wordGuessedBtn.addEventListener('click', handleWordGuessed);
-        // confirmWordBtn is no longer needed in the main flow
-        // but kept for backwards compatibility
-        if (confirmWordBtn) {
-            confirmWordBtn.addEventListener('click', confirmWordGuessed);
-        }
         extraPointGuessedBtn.addEventListener('click', () => handleExtraPoint(true));
         extraPointMissedBtn.addEventListener('click', () => handleExtraPoint(false));
         playAgainBtn.addEventListener('click', resetGame);
@@ -183,7 +169,6 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(data => {
                 currentWord = data.word;
                 currentWordElement.textContent = currentWord;
-                guessedWordElement.textContent = currentWord;
                 missedWordElement.textContent = currentWord;
 
                 // Update game state
@@ -233,9 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 timerBeepsEl.style.width = `${progress * 100}%`;
             }
 
-            // Calculate current beep interval based on progress
-            // const currentBeepInterval = maxBeepInterval - (progress * (maxBeepInterval - minBeepInterval));
-            const currentBeepInterval = 2000
+            // Use fixed beep interval
+            const currentBeepInterval = 2000;
             // Determine beep phase based on progress
             if (progress < 0.5) {
                 beepPhase = 1; // One beep per interval
@@ -406,7 +390,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 // Update the current word with the new word for the next team
                 currentWord = data.new_word;
                 currentWordElement.textContent = currentWord;
-                guessedWordElement.textContent = currentWord;
                 missedWordElement.textContent = currentWord;
 
                 // Show notification that device is being passed
@@ -433,30 +416,7 @@ document.addEventListener('DOMContentLoaded', () => {
             });
     }
 
-    /**
-     * Legacy function to confirm a guessed word
-     * This is no longer used in the main flow
-     * but kept for backwards compatibility
-     */
-    function confirmWordGuessed() {
-        apiCall('/api/confirm', {
-            method: 'POST'
-        })
-            .then(data => {
-                gameState = 'ready';
-                updateGameScreen(gameState);
 
-                console.log('Legacy word confirmation! Switching teams. Timer continues running...');
-
-                // Check if a team has won (unlikely at this stage since points are only awarded when timer ends)
-                if (data.winner) {
-                    showWinnerScreen(data.winner);
-                }
-            })
-            .catch(error => {
-                console.error('Error with legacy confirm endpoint:', error);
-            });
-    }
 
     /**
      * Handle extra point attempt after timer ends

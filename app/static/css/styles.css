@@ -321,36 +321,9 @@ input[type="range"] {
   margin-top: var(--spacing-xl);
 }
 
-.rules-accordion {
-  margin-top: var(--spacing-xl);
-  border: 1px solid var(--gray-light);
-  border-radius: var(--border-radius-md);
-  overflow: hidden;
-}
 
-.rules-accordion summary {
-  padding: var(--spacing-md);
-  font-weight: 500;
-  cursor: pointer;
-  background-color: var(--light-color);
-  border-bottom: 1px solid var(--gray-light);
-}
 
-.rules-accordion summary:hover {
-  background-color: var(--gray-light);
-}
 
-.rules-content {
-  padding: var(--spacing-md);
-}
-
-.error-message {
-  background-color: rgba(234, 67, 53, 0.1);
-  color: var(--danger-color);
-  border-radius: var(--border-radius-sm);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-}
 
 /* Media Queries */
 @media (max-width: 480px) {
