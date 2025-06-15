@@ -21,9 +21,13 @@ def create_app(test_config=None):
     # Default configuration
     app.config.from_mapping(
         SECRET_KEY=os.environ.get("SECRET_KEY", secrets.token_hex(32)),
-        WORDS_FILE=os.environ.get("WORDS_FILE", os.path.join(app.root_path, "words.json")),
+        WORDS_FILE=os.environ.get(
+            "WORDS_FILE", os.path.join(app.root_path, "words.json")
+        ),
         MAX_POINTS=int(os.environ.get("MAX_POINTS", 10)),  # Points needed to win
-        WTF_CSRF_TIME_LIMIT=int(os.environ.get("CSRF_TIME_LIMIT", 3600)),  # CSRF token expiry
+        WTF_CSRF_TIME_LIMIT=int(
+            os.environ.get("CSRF_TIME_LIMIT", 3600)
+        ),  # CSRF token expiry
         ALLOWED_HOSTS=os.environ.get("ALLOWED_HOSTS", "localhost,127.0.0.1").split(","),
     )
 
@@ -58,7 +62,7 @@ def create_app(test_config=None):
         return {
             "status": "healthy",
             "timestamp": datetime.now().isoformat(),
-            "environment": os.environ.get("FLASK_ENV", "production")
+            "environment": os.environ.get("FLASK_ENV", "production"),
         }
 
     # Register context processors
