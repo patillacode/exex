@@ -35,7 +35,9 @@
     <!-- Game screens - only one will be shown at a time based on game state -->
     <div class="game-screen game-ready" data-state="ready">
         <p>Prepárate para ver una palabra. Describe esta palabra a tus compañeros de equipo.</p>
-        <button id="show-word-btn" class="btn btn-primary btn-large">Ver Palabra</button>
+        <button id="show-word-btn" class="btn btn-primary btn-large">
+            <i class="icon-play"></i> Ver Palabra
+        </button>
     </div>
 
     <div class="game-screen game-playing" data-state="playing">
@@ -44,7 +46,7 @@
         </div>
         <button id="word-guessed-btn" class="btn btn-success btn-large guessed-btn">
             <span class="guessed-text">¡ADIVINADO!</span>
-            <span class="pass-device-text">Pasar dispositivo →</span>
+            <span class="pass-device-text">Pasar dispositivo <strong>→</strong></span>
         </button>
     </div>
 
@@ -58,8 +60,8 @@
         <div class="extra-point-section">
             <p><strong>Oportunidad de punto extra</strong></p>
             <div class="extra-point-buttons">
-                <button id="extra-point-guessed-btn" class="btn btn-success">¡La adivinan! (+1 punto)</button>
-                <button id="extra-point-missed-btn" class="btn btn-danger">¡No la adivinan! (0 puntos)</button>
+                <button id="extra-point-guessed-btn" class="btn btn-success btn-large">¡La adivinan! (+1 punto)</button>
+                <button id="extra-point-missed-btn" class="btn btn-danger btn-large">¡No la adivinan! (0 puntos)</button>
             </div>
         </div>
     </div>
@@ -75,8 +77,8 @@
             <div>{{ team2.name }}: <span id="team2-final-score">{{ team2.points }}</span> puntos</div>
         </div>
         <div class="end-game-actions">
-            <button id="play-again-btn" class="btn btn-primary">Jugar de nuevo (mismos equipos)</button>
-            <a href="{{ url_for('game.setup') }}" class="btn btn-secondary">Nueva configuración</a>
+            <button id="play-again-btn" class="btn btn-primary btn-large">Jugar de nuevo (mismos equipos)</button>
+            <a href="{{ url_for('game.setup') }}" class="btn btn-secondary btn-large">Nueva configuración</a>
         </div>
     </div>
 </div>
