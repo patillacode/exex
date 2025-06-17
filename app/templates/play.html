@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="game-container" data-points-to-win="{{ points_to_win }}" data-timer-min="{{ timer_min|default(30) }}" data-timer-max="{{ timer_max|default(90) }}">
+<div class="game-container" data-points-to-win="{{ points_to_win }}" data-timer-min="{{ timer_min|default(30) }}" data-timer-max="{{ timer_max|default(90) }}" data-beep-mode="{{ beep_mode|default('standard') }}">
     <div class="game-header">
         <div class="game-status">
             <div class="team team-1 {% if active_team == 1 %}active{% endif %}">
@@ -41,9 +41,6 @@
     <div class="game-screen game-playing" data-state="playing">
         <div class="word-display">
             <span id="current-word" class="word-text"></span>
-        </div>
-        <div class="pass-device-instructions">
-            <p class="instruction-note">Cuando adivines la palabra, pasa el dispositivo al otro equipo</p>
         </div>
         <button id="word-guessed-btn" class="btn btn-success btn-large guessed-btn">
             <span class="guessed-text">¡ADIVINADO!</span>

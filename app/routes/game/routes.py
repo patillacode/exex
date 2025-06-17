@@ -52,6 +52,11 @@ def setup():
             timer_min = 30
             timer_max = 90
 
+        # Get beep mode
+        beep_mode = request.form.get("beep_mode", "standard")
+        if beep_mode not in ["standard", "aggressive"]:
+            beep_mode = "standard"
+
         # Initialize game session
         session.clear()
         session["team1"] = {"name": team1_name, "points": 0}
@@ -59,6 +64,7 @@ def setup():
         session["points_to_win"] = points_to_win
         session["timer_min"] = timer_min
         session["timer_max"] = timer_max
+        session["beep_mode"] = beep_mode
         session["active_team"] = 1  # Team 1 starts
         session["used_words"] = []
         session["current_word"] = None
@@ -84,6 +90,7 @@ def play():
         points_to_win=session["points_to_win"],
         timer_min=session.get("timer_min", 30),
         timer_max=session.get("timer_max", 90),
+        beep_mode=session.get("beep_mode", "standard"),
         active_team=session["active_team"],
         game_state=session["game_state"],
     )
@@ -281,6 +288,7 @@ def reset_game():
     points_to_win = session["points_to_win"]
     timer_min = session.get("timer_min", 30)
     timer_max = session.get("timer_max", 90)
+    beep_mode = session.get("beep_mode", "standard")
 
     # Reset game state
     session["team1"] = {"name": team1_name, "points": 0}
@@ -288,6 +296,7 @@ def reset_game():
     session["points_to_win"] = points_to_win
     session["timer_min"] = timer_min
     session["timer_max"] = timer_max
+    session["beep_mode"] = beep_mode
     session["active_team"] = 1  # Team 1 starts
     session["used_words"] = []
     session["current_word"] = None

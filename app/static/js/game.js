@@ -49,13 +49,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Timer configuration
     const maxBeepInterval = 2000; // ms between beeps at start
+    const minBeepInterval = 100; // ms between beeps at fastest (for aggressive mode)
     let timerStartTime;
     let beepPhase = 1; // 1, 2, 3 (number of beeps per interval)
 
     // Get timer settings from data attributes or use defaults
     const timerMinSeconds = parseInt(gameContainer.dataset.timerMin) || 30;
     const timerMaxSeconds = parseInt(gameContainer.dataset.timerMax) || 90;
-    console.log(`Timer range: ${timerMinSeconds}-${timerMaxSeconds} seconds`);
+    const beepMode = gameContainer.dataset.beepMode || 'standard';
+    console.log(`Timer range: ${timerMinSeconds}-${timerMaxSeconds} seconds, Beep mode: ${beepMode}`);
 
     // Points to win - retrieved from the data-points-to-win attribute
     const pointsToWin = parseInt(gameContainer.dataset.pointsToWin) || 10;
@@ -210,8 +212,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const elapsedTime = Date.now() - timerStartTime;
             const progress = Math.min(elapsedTime / actualTimerDuration, 1);
 
-            // Use fixed beep interval
-            const currentBeepInterval = 2000;
+            // Use different beep interval calculation based on selected mode
+            let currentBeepInterval;
+
+            if (beepMode === 'aggressive') {
+                // Aggressive mode - beeps get faster as time progresses
+                currentBeepInterval = maxBeepInterval - (progress * (maxBeepInterval - minBeepInterval));
+            } else {
+                // Standard mode - fixed interval with increasing beeps per interval
+                currentBeepInterval = 2000;
+            }
+
             // Determine beep phase based on progress
             if (progress < 0.5) {
                 beepPhase = 1; // One beep per interval
@@ -245,6 +256,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 beepSound = new Audio('/static/sounds/beep.mp3');
             }
 
+            // Adjust volume based on beep mode - louder for aggressive mode
+            beepSound.volume = beepMode === 'aggressive' ? 1.0 : 0.8;
+
             // Play the beep
             beepSound.play().catch(e => console.log('Error playing beep:', e));
         } catch (error) {
@@ -265,32 +279,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 beepSound.play().catch(e => console.log('Error playing beep:', e));
             }, 300);
         }
-    }
-
-    /**
-     * Show a brief notification when passing the device between teams
-     */
-    function showPassingNotification() {
-        // Create a notification element
-        const notification = document.createElement('div');
-        notification.className = 'passing-notification';
-        notification.innerHTML = '<p>¡Dispositivo pasado!</p>';
-
-        // Add it to the document
-        document.body.appendChild(notification);
-
-        // Trigger animation
-        setTimeout(() => {
-            notification.classList.add('show');
-        }, 10);
-
-        // Remove it after animation completes
-        setTimeout(() => {
-            notification.classList.remove('show');
-            setTimeout(() => {
-                notification.remove();
-            }, 500);
-        }, 800);
     }
 
     /**
@@ -383,9 +371,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 currentWord = data.new_word;
                 currentWordElement.textContent = currentWord;
                 missedWordElement.textContent = currentWord;
-
-                // Show notification that device is being passed
-                showPassingNotification();
 
                 // Show the word screen for the next team
                 updateGameScreen(gameState);

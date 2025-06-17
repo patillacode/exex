@@ -47,6 +47,20 @@
                 </div>
             </div>
 
+            <div class="form-group">
+                <label for="beep_mode">Modo de Pitidos:</label>
+                <div class="radio-container">
+                    <div class="radio-option">
+                        <input type="radio" id="beep_mode_standard" name="beep_mode" value="standard" checked>
+                        <label for="beep_mode_standard">Estándar (intervalos fijos)</label>
+                    </div>
+                    <div class="radio-option">
+                        <input type="radio" id="beep_mode_aggressive" name="beep_mode" value="aggressive">
+                        <label for="beep_mode_aggressive">Agresivo (pitidos acelerados)</label>
+                    </div>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" id="start-game-btn" class="btn btn-primary">¡Comenzar Juego!</button>
                 <a href="{{ url_for('game.index') }}" class="btn btn-secondary">Volver</a>
@@ -92,6 +106,32 @@ document.addEventListener('DOMContentLoaded', function() {
             timerMinValue.textContent = `${timerMin.value} segundos`;
         }
     });
+
+    // Beep mode selection
+    const beepModeStandard = document.getElementById('beep_mode_standard');
+    const beepModeAggressive = document.getElementById('beep_mode_aggressive');
+
+    // Add visual feedback when selecting beep modes
+    beepModeStandard.addEventListener('change', function() {
+        if (this.checked) {
+            document.querySelector('label[for="beep_mode_standard"]').classList.add('selected');
+            document.querySelector('label[for="beep_mode_aggressive"]').classList.remove('selected');
+        }
+    });
+
+    beepModeAggressive.addEventListener('change', function() {
+        if (this.checked) {
+            document.querySelector('label[for="beep_mode_aggressive"]').classList.add('selected');
+            document.querySelector('label[for="beep_mode_standard"]').classList.remove('selected');
+        }
+    });
+
+    // Set initial selection
+    if (beepModeStandard.checked) {
+        document.querySelector('label[for="beep_mode_standard"]').classList.add('selected');
+    } else if (beepModeAggressive.checked) {
+        document.querySelector('label[for="beep_mode_aggressive"]').classList.add('selected');
+    }
 });
 </script>
 {% endblock %}
