@@ -41,11 +41,24 @@ def setup():
         except ValueError:
             points_to_win = 10
 
+        # Get timer settings
+        try:
+            timer_min = int(request.form.get("timer_min", 30))
+            timer_max = int(request.form.get("timer_max", 90))
+            # Ensure timer values are in reasonable ranges
+            timer_min = max(10, min(45, timer_min))
+            timer_max = max(timer_min, min(120, timer_max))
+        except ValueError:
+            timer_min = 30
+            timer_max = 90
+
         # Initialize game session
         session.clear()
         session["team1"] = {"name": team1_name, "points": 0}
         session["team2"] = {"name": team2_name, "points": 0}
         session["points_to_win"] = points_to_win
+        session["timer_min"] = timer_min
+        session["timer_max"] = timer_max
         session["active_team"] = 1  # Team 1 starts
         session["used_words"] = []
         session["current_word"] = None
@@ -69,6 +82,8 @@ def play():
         team1=session["team1"],
         team2=session["team2"],
         points_to_win=session["points_to_win"],
+        timer_min=session.get("timer_min", 30),
+        timer_max=session.get("timer_max", 90),
         active_team=session["active_team"],
         game_state=session["game_state"],
     )
@@ -264,11 +279,15 @@ def reset_game():
     team1_name = session["team1"]["name"]
     team2_name = session["team2"]["name"]
     points_to_win = session["points_to_win"]
+    timer_min = session.get("timer_min", 30)
+    timer_max = session.get("timer_max", 90)
 
     # Reset game state
     session["team1"] = {"name": team1_name, "points": 0}
     session["team2"] = {"name": team2_name, "points": 0}
     session["points_to_win"] = points_to_win
+    session["timer_min"] = timer_min
+    session["timer_max"] = timer_max
     session["active_team"] = 1  # Team 1 starts
     session["used_words"] = []
     session["current_word"] = None

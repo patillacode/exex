@@ -1,4 +1,4 @@
-/* 
+/*
  * Expresión Exprés - Game-specific Stylesheet
  * Styles specific to the gameplay experience
  */
@@ -24,6 +24,7 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Team styling */
 .team {
   flex: 1;
   padding: var(--spacing-sm);
@@ -33,7 +34,6 @@
 }
 
 .team.active {
-  background-color: rgba(66, 133, 244, 0.1);
   font-weight: 500;
 }
 
@@ -106,31 +106,7 @@
   z-index: 10;
 }
 
-.board-markers {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 2px;
-}
 
-.marker {
-  font-size: 0.7rem;
-  color: var(--gray-color);
-  position: relative;
-}
-
-.marker.start span,
-.marker.finish span {
-  position: absolute;
-  white-space: nowrap;
-}
-
-.marker.start span {
-  left: 0;
-}
-
-.marker.finish span {
-  right: 0;
-}
 
 /* ===== Game Screens ===== */
 .game-screen {
@@ -178,31 +154,6 @@
   padding-left: var(--spacing-lg);
 }
 
-.hot-potato-warning {
-  color: var(--danger-color);
-  font-weight: bold;
-  animation: pulse 1.5s infinite;
-  margin: 0;
-  padding: 0.5rem 1rem;
-  border-radius: var(--border-radius-sm);
-  display: inline-block;
-  text-align: center;
-  font-size: 1.1rem;
-  box-shadow: 0 0 5px rgba(234, 67, 53, 0.3);
-  background-color: rgba(234, 67, 53, 0.1);
-}
-
-.hot-potato-banner {
-  background-color: var(--danger-light);
-  color: var(--danger-color);
-  font-weight: bold;
-  text-align: center;
-  padding: 0.5rem;
-  border-radius: var(--border-radius-md);
-  margin-bottom: var(--spacing-md);
-  position: relative;
-  animation: pulse 1.5s infinite;
-}
 
 .pass-device-instructions {
   margin: var(--spacing-md) 0;
@@ -267,30 +218,6 @@
   text-transform: uppercase;
   letter-spacing: 2px;
 }
-
-/* Timer Indicator */
-.timer-indicator {
-  margin: var(--spacing-md) 0;
-  width: 100%;
-}
-
-.timer-visual {
-  height: 10px;
-  background-color: var(--gray-light);
-  border-radius: var(--border-radius-lg);
-  overflow: hidden;
-  position: relative;
-}
-
-.timer-beeps {
-  height: 100%;
-  width: 0;
-  background-color: var(--primary-color);
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
 /* Guessed button styling */
 .guessed-btn {
   position: relative;
@@ -386,8 +313,7 @@
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
-
-/* Round info */
+/* Information sections */
 .round-info {
   background-color: var(--accent-light);
   border-radius: var(--border-radius-sm);
@@ -403,43 +329,6 @@
   padding: var(--spacing-sm);
   border-radius: var(--border-radius-sm);
   display: inline-block;
-}
-
-/* Game flow explainer */
-.game-flow-explainer {
-  background-color: var(--light-color);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-md);
-  margin-bottom: var(--spacing-md);
-  width: 100%;
-}
-
-.game-flow-explainer h4 {
-  margin-bottom: var(--spacing-sm);
-  color: var(--primary-dark);
-}
-
-.game-flow-explainer ol {
-  padding-left: var(--spacing-lg);
-  margin-bottom: 0;
-}
-
-/* Device passing alert */
-.pass-device-alert {
-  background-color: var(--accent-light);
-  color: var(--accent-color);
-  font-weight: bold;
-  padding: var(--spacing-md);
-  border-radius: var(--border-radius-md);
-  margin: var(--spacing-md) 0;
-  text-align: center;
-  border: 2px dashed var(--accent-color);
-  animation: pulse 1.5s infinite;
-}
-
-.pass-device-alert p:first-child {
-  font-size: 1.2rem;
-  margin-bottom: var(--spacing-xs);
 }
 
 /* Timer ended summary */
@@ -472,26 +361,8 @@
   background: linear-gradient(to right, var(--primary-color), var(--danger-color));
 }
 
-.game-screen.game-playing::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background-color: var(--accent-color);
-}
-
-.game-screen.game-guessed::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background-color: var(--secondary-color);
-}
-
+/* Game screen decorative top borders */
+.game-screen.game-playing::before,
 .game-screen.game-timer-ended::before {
   content: '';
   position: absolute;
@@ -499,6 +370,13 @@
   left: 0;
   width: 100%;
   height: 5px;
+}
+
+.game-screen.game-playing::before {
+  background-color: var(--accent-color);
+}
+
+.game-screen.game-timer-ended::before {
   background-color: var(--danger-color);
 }
 
@@ -571,21 +449,9 @@
     font-size: 2.2rem;
     letter-spacing: 1px;
   }
-  
+
   .extra-point-buttons {
     flex-direction: column;
-  }
-  
-  .hot-potato-banner {
-    font-size: 0.9rem;
-  }
-  
-  .pass-device-alert p:first-child {
-    font-size: 1rem;
-  }
-  
-  .game-flow-explainer {
-    font-size: 0.9rem;
   }
 }
 
@@ -594,7 +460,7 @@
     flex-direction: row;
     justify-content: center;
   }
-  
+
   .btn {
     width: auto;
   }

@@ -31,6 +31,22 @@
                 </div>
             </div>
 
+            <div class="form-group">
+                <label for="timer_min">Temporizador Mínimo (segundos):</label>
+                <div class="range-container">
+                    <input type="range" id="timer_min" name="timer_min" min="10" max="45" value="30" step="5">
+                    <span id="timer-min-value">30 segundos</span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="timer_max">Temporizador Máximo (segundos):</label>
+                <div class="range-container">
+                    <input type="range" id="timer_max" name="timer_max" min="45" max="120" value="90" step="5">
+                    <span id="timer-max-value">90 segundos</span>
+                </div>
+            </div>
+
             <div class="form-actions">
                 <button type="submit" id="start-game-btn" class="btn btn-primary">¡Comenzar Juego!</button>
                 <a href="{{ url_for('game.index') }}" class="btn btn-secondary">Volver</a>
@@ -50,6 +66,31 @@ document.addEventListener('DOMContentLoaded', function() {
     // Update points display
     pointsToWin.addEventListener('input', function() {
         pointsValue.textContent = `${this.value} puntos`;
+    });
+
+    // Timer range controls
+    const timerMin = document.getElementById('timer_min');
+    const timerMax = document.getElementById('timer_max');
+    const timerMinValue = document.getElementById('timer-min-value');
+    const timerMaxValue = document.getElementById('timer-max-value');
+
+    // Update timer values
+    timerMin.addEventListener('input', function() {
+        timerMinValue.textContent = `${this.value} segundos`;
+        // Ensure min doesn't exceed max
+        if (parseInt(timerMin.value) > parseInt(timerMax.value)) {
+            timerMax.value = timerMin.value;
+            timerMaxValue.textContent = `${timerMax.value} segundos`;
+        }
+    });
+
+    timerMax.addEventListener('input', function() {
+        timerMaxValue.textContent = `${this.value} segundos`;
+        // Ensure max isn't less than min
+        if (parseInt(timerMax.value) < parseInt(timerMin.value)) {
+            timerMin.value = timerMax.value;
+            timerMinValue.textContent = `${timerMin.value} segundos`;
+        }
     });
 });
 </script>

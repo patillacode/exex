@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="game-container" data-points-to-win="{{ points_to_win }}">
+<div class="game-container" data-points-to-win="{{ points_to_win }}" data-timer-min="{{ timer_min|default(30) }}" data-timer-max="{{ timer_max|default(90) }}">
     <div class="game-header">
         <div class="game-status">
             <div class="team team-1 {% if active_team == 1 %}active{% endif %}">
@@ -51,23 +51,10 @@
         </button>
     </div>
 
-    <!-- Hidden but kept for compatibility -->
-    <div class="game-screen game-guessed" data-state="guessed" style="display:none">
-        <div class="word-display">
-            <span class="word-text" id="guessed-word"></span>
-        </div>
-        <button id="confirm-word-btn" class="btn btn-primary">Continuar</button>
-    </div>
+
 
     <div class="game-screen game-timer-ended" data-state="timer_ended">
         <h3>¡TIEMPO AGOTADO! - FIN DE LA RONDA</h3>
-        <!-- <div class="timer-ended-summary">
-            <p class="fail-message">El equipo {{ team1.name if active_team == 2 else team2.name }} no ha adivinado la palabra a tiempo.</p>
-            <p class="points-awarded"><strong>El equipo {{ team1.name if active_team == 1 else team2.name }} gana 1 punto automáticamente.</strong></p>
-        </div> -->
-        <!-- <div class="round-info">
-            <p><strong>Nueva ronda:</strong> Después de decidir sobre el punto extra, comenzará una nueva ronda con un nuevo cronómetro.</p>
-        </div> -->
         <div class="word-display">
             <span class="word-text" id="missed-word"></span>
         </div>
