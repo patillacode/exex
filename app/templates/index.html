@@ -5,13 +5,9 @@
 {% block content %}
 <div class="welcome-container">
     <div class="card">
-        <div class="card-header">
-            <h2 class="">¡Bienvenido a ExEx!</h2>
-        </div>
         <div class="card-body">
             <p class="intro-text">
-                Expresión Exprés es un juego de palabras donde dos equipos compiten por adivinar palabras o expresiones.
-                Pasad el dispositivo entre los equipos para jugar.
+                <b>Expresión Exprés</b> es un juego de palabras donde dos equipos compiten por adivinar palabras o expresiones.
             </p>
 
             <div class="game-rules">
@@ -30,7 +26,7 @@
             </div>
 
             <div class="action-buttons">
-                <a href="{{ url_for('game.setup') }}" class="btn btn-primary">Comenzar Juego</a>
+                <a href="{{ url_for('game.setup') }}" class="btn btn-primary btn-large">Comenzar Juego</a>
             </div>
         </div>
     </div>

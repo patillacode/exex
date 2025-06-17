@@ -52,6 +52,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let timerStartTime;
     let beepPhase = 1; // 1, 2, 3 (number of beeps per interval)
 
+    // Get timer settings from data attributes or use defaults
+    const timerMinSeconds = parseInt(gameContainer.dataset.timerMin) || 30;
+    const timerMaxSeconds = parseInt(gameContainer.dataset.timerMax) || 90;
+    console.log(`Timer range: ${timerMinSeconds}-${timerMaxSeconds} seconds`);
+
     // Points to win - retrieved from the data-points-to-win attribute
     const pointsToWin = parseInt(gameContainer.dataset.pointsToWin) || 10;
     console.log(`Points needed to win: ${pointsToWin}`);
@@ -193,30 +198,17 @@ document.addEventListener('DOMContentLoaded', () => {
         if (timerActive) return;
 
         timerActive = true;
-        const timerBeepsEl = document.querySelector('.timer-beeps');
         timerStartTime = Date.now();
         let lastBeepTime = 0;
 
-        // For production: a random timer duration between 30-90 seconds
-        const actualTimerDuration = (Math.floor(Math.random() * (90 - 30 + 1)) + 30) * 1000;
-
-        // For testing: a shorter timer (5-15 seconds)
-        // const actualTimerDuration = (Math.floor(Math.random() * (15 - 5 + 1)) + 5) * 1000;
-
-        // Reset timer visual
-        if (timerBeepsEl) {
-            timerBeepsEl.style.width = '0%';
-        }
+        // Use configurable timer duration range
+        const actualTimerDuration = (Math.floor(Math.random() * (timerMaxSeconds - timerMinSeconds + 1)) + timerMinSeconds) * 1000;
+        console.log(`Timer set for ${actualTimerDuration / 1000} seconds`);
 
         // Start timer interval
         timerInterval = setInterval(() => {
             const elapsedTime = Date.now() - timerStartTime;
             const progress = Math.min(elapsedTime / actualTimerDuration, 1);
-
-            // Update timer visual
-            if (timerBeepsEl) {
-                timerBeepsEl.style.width = `${progress * 100}%`;
-            }
 
             // Use fixed beep interval
             const currentBeepInterval = 2000;

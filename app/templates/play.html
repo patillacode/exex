@@ -7,7 +7,7 @@
 {% endblock %}
 
 {% block content %}
-<div class="game-container" data-points-to-win="{{ points_to_win }}">
+<div class="game-container" data-points-to-win="{{ points_to_win }}" data-timer-min="{{ timer_min|default(30) }}" data-timer-max="{{ timer_max|default(90) }}">
     <div class="game-header">
         <div class="game-status">
             <div class="team team-1 {% if active_team == 1 %}active{% endif %}">

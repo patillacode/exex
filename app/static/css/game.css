@@ -24,6 +24,7 @@
   box-shadow: var(--shadow-sm);
 }
 
+/* Team styling */
 .team {
   flex: 1;
   padding: var(--spacing-sm);
@@ -33,7 +34,6 @@
 }
 
 .team.active {
-  background-color: rgba(66, 133, 244, 0.1);
   font-weight: 500;
 }
 
@@ -155,7 +155,6 @@
 }
 
 
-
 .pass-device-instructions {
   margin: var(--spacing-md) 0;
   background-color: var(--accent-light);
@@ -219,18 +218,6 @@
   text-transform: uppercase;
   letter-spacing: 2px;
 }
-
-
-
-.timer-beeps {
-  height: 100%;
-  width: 0;
-  background-color: var(--primary-color);
-  position: absolute;
-  left: 0;
-  top: 0;
-}
-
 /* Guessed button styling */
 .guessed-btn {
   position: relative;
@@ -326,8 +313,7 @@
   opacity: 1;
   transform: translate(-50%, -50%) scale(1);
 }
-
-/* Round info */
+/* Information sections */
 .round-info {
   background-color: var(--accent-light);
   border-radius: var(--border-radius-sm);
@@ -344,8 +330,6 @@
   border-radius: var(--border-radius-sm);
   display: inline-block;
 }
-
-
 
 /* Timer ended summary */
 .timer-ended-summary {
@@ -377,18 +361,8 @@
   background: linear-gradient(to right, var(--primary-color), var(--danger-color));
 }
 
-.game-screen.game-playing::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 5px;
-  background-color: var(--accent-color);
-}
-
-
-
+/* Game screen decorative top borders */
+.game-screen.game-playing::before,
 .game-screen.game-timer-ended::before {
   content: '';
   position: absolute;
@@ -396,6 +370,13 @@
   left: 0;
   width: 100%;
   height: 5px;
+}
+
+.game-screen.game-playing::before {
+  background-color: var(--accent-color);
+}
+
+.game-screen.game-timer-ended::before {
   background-color: var(--danger-color);
 }
 
@@ -471,18 +452,6 @@
 
   .extra-point-buttons {
     flex-direction: column;
-  }
-
-  .hot-potato-banner {
-    font-size: 0.9rem;
-  }
-
-  .pass-device-alert p:first-child {
-    font-size: 1rem;
-  }
-
-  .game-flow-explainer {
-    font-size: 0.9rem;
   }
 }
 
