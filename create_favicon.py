@@ -5,7 +5,6 @@ Creates a modern dark-themed favicon matching the new color scheme.
 """
 
 import os
-import sys
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -42,9 +41,9 @@ def create_favicon():
                 try:
                     font = ImageFont.truetype(font_name, font_size)
                     break
-                except:
+                except OSError:
                     continue
-        except:
+        except Exception:
             # If no system fonts work, use default
             font = ImageFont.load_default()
 
