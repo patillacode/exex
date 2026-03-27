@@ -5,7 +5,7 @@ services:
     restart: unless-stopped
     labels:
       - "kuma.exex.http.name=ExEx"
-      - "kuma.exex.http.url=http://192.168.1.2:5054"
+      - "kuma.exex.http.url=https://exex.patilla.es"
 
     ports:
       - "${PORT:-5054}:${PORT:-5054}"
